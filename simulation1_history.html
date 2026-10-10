@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dual-Directional Aviation Security: Historical Context (2001-2026)</title>
+<style>
+  :root {
+    --bg: #0a0d14;
+    --panel-bg: #0f172a;
+    --border: #1e293b;
+    --text-main: #e2e8f0;
+    --text-muted: #64748b;
+    --accent-blue: #0284c7;
+    --alert-amber: #f59e0b;
+    --alert-red: #ef4444;
+    --green-norm: #10b981;
+    --gold: #eab308;
+    --grid: #141c2b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px 10px;
+    overflow-x: hidden;
+  }
+
+  .master-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 25px;
+    z-index: 50;
+  }
+
+  .master-nav button {
+    background: #0f172a;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 10px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .master-nav button:hover { background: #1e293b; color: var(--text-main); }
+  .master-nav button.active-nav {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(2, 132, 199, 0.4);
+  }
+
+  .block-wrapper {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  .block-wrapper.active-block { display: flex; }
+
+  .canvas-container {
+    position: relative;
+    width: 900px;
+    height: 520px;
+    background: radial-gradient(circle at 50% 50%, #0f172a 0%, var(--bg) 100%);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    overflow: hidden;
+  }
+
+  .grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(to right, var(--grid) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+    background-size: 35px 35px;
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  .pane-header {
+    position: absolute;
+    top: 20px; left: 25px;
+    font-size: 11px; letter-spacing: 2px;
+    font-weight: 600; color: var(--accent-blue);
+    z-index: 10;
+  }
+
+  .pane-status {
+    position: absolute;
+    top: 20px; right: 25px;
+    font-size: 11px; letter-spacing: 1px;
+    color: var(--text-muted);
+    z-index: 10;
+  }
+
+  .phase-caption {
+    position: absolute;
+    bottom: 20px; left: 25px; right: 25px;
+    background: rgba(15, 23, 42, 0.92);
+    border-left: 3px solid var(--accent-blue);
+    padding: 12px 18px;
+    border-radius: 0 4px 4px 0;
+    font-size: 12px; line-height: 1.5;
+    z-index: 20; transition: border-color 0.4s;
+  }
+
+  .stage-view { position: absolute; inset: 0; transition: opacity 0.6s ease; }
+  .split-pane { flex: 1; position: relative; height: 100%; overflow: hidden; }
+  .split-left { border-right: 1px solid var(--border); background: radial-gradient(circle at 20% 30%, #0f172a 0%, var(--bg) 100%); }
+  .split-right { background: radial-gradient(circle at 80% 30%, #0f172a 0%, var(--bg) 100%); }
+
+  svg { width: 100%; height: 100%; }
+
+  .controls { margin-top: 15px; display: flex; gap: 10px; }
+  .controls button {
+    background: #1e293b; border: 1px solid #334155;
+    color: var(--text-main); padding: 8px 16px;
+    font-size: 11px; letter-spacing: 1px;
+    border-radius: 4px; cursor: pointer; transition: background 0.2s;
+  }
+  .controls button:hover { background: #334155; }
+  .controls button.active-blue { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+  .controls button.active-red { background: var(--alert-red); border-color: var(--alert-red); color: #fff; }
+</style>
+</head>
+<body>
+
+<!-- ВЕРХНЕЕ ГЛАВНОЕ МЕНЮ: ЭВОЛЮЦИЯ СИСТЕМЫ БЕЗОПАСНОСТИ -->
+<div class="master-nav">
+  <button id="mNav1" class="active-nav" onclick="selectBlock(1)">1. 2001: Pre-9/11 & FAR 25.795</button>
+  <button id="mNav2" onclick="selectBlock(2)">2. 2015: Germanwings 9525</button>
+  <button id="mNav3" onclick="selectBlock(3)">3. 2015: Two-Person Rule Cycle</button>
+  <button id="mNav4" onclick="selectBlock(4)">4. 2026: FlyDubai FZ1073</button>
+</div>
+
+<!-- ================= БЛОК 1: 2001 ГОД ================= -->
+<div id="block1" class="block-wrapper active-block">
+  <div class="canvas-container">
+    <div class="grid-overlay"></div>
+    <div class="pane-header">ARCHITECTURAL AUDIT // BLOCK 01</div>
+    <div class="pane-status" id="b1_hudStatus">CHRONOLOGY: PRE-2001</div>
+
+    <svg viewBox="0 0 900 520">
+      <defs>
+        <g id="b1_paxSeat">
+          <rect x="0" y="0" width="22" height="18" rx="3" fill="none" stroke="#334155" stroke-width="1.2"/>
+          <line x1="16" y1="2" x2="16" y2="16" stroke="#334155" stroke-width="1.2"/>
+          <line x1="0" y1="4" x2="16" y2="4" stroke="#1e293b" stroke-width="1"/>
+          <line x1="0" y1="14" x2="16" y2="14" stroke="#1e293b" stroke-width="1"/>
+        </g>
+      </defs>
+
+      <g id="b1_sceneRadar" opacity="0" style="transition: opacity 0.8s ease;">
+        <rect x="620" y="160" width="38" height="200" fill="none" stroke="#475569" stroke-width="2" stroke-dasharray="4 2"/>
+        <rect x="675" y="140" width="38" height="220" fill="none" stroke="#475569" stroke-width="2" stroke-dasharray="4 2"/>
+        <text x="635" y="380" fill="#64748b" font-size="10" letter-spacing="1">NYC PERIMETER</text>
+        <path d="M 120 280 C 300 280, 450 210, 620 210" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="6 4"/>
+        <g id="b1_radarPlane" transform="translate(120, 280)">
+          <polygon points="0,-4 14,0 0,4 3,0" fill="#ef4444"/>
+          <circle cx="0" cy="0" r="12" fill="none" stroke="#ef4444" stroke-width="1" opacity="0.4"/>
+        </g>
+        <g id="b1_impactMarker" transform="translate(620, 210)" opacity="0">
+          <circle cx="0" cy="0" r="8" fill="none" stroke="#ef4444" stroke-width="2">
+            <animate attributeName="r" values="6;22;6" dur="2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="1;0;1" dur="2s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="0" cy="0" r="3" fill="#ef4444"/>
+          <text x="18" y="-10" fill="#ef4444" font-size="11" font-weight="600" letter-spacing="1">EVENT VECTOR: UNLAWFUL CONTROL</text>
+          <text x="18" y="6" fill="#94a3b8" font-size="9">ATC RADAR CONTACT TERMINATED</text>
+        </g>
+      </g>
+
+      <g id="b1_sceneFuselage" opacity="1" style="transition: opacity 0.8s ease;">
+        <path d="M 170 260 C 200 150, 300 140, 770 140 L 770 380 C 300 380, 200 370, 170 260 Z" fill="#0b111e" stroke="#334155" stroke-width="2"/>
+        <path d="M 205 210 C 215 240, 215 280, 205 310" fill="none" stroke="#475569" stroke-width="1.5"/>
+        <g transform="translate(225, 225)"><line x1="0" y1="0" x2="8" y2="0" stroke="#475569" stroke-width="1.5"/><path d="M 8 -7 C 5 -7, 5 7, 8 7" fill="none" stroke="#64748b" stroke-width="1.5"/></g>
+        <g transform="translate(245, 210)"><rect x="0" y="0" width="28" height="28" rx="4" fill="none" stroke="#475569" stroke-width="1.5"/><line x1="20" y1="4" x2="20" y2="24" stroke="#475569" stroke-width="1.5"/><rect x="5" y="-3" width="14" height="4" rx="1" fill="none" stroke="#334155" stroke-width="1"/><rect x="5" y="27" width="14" height="4" rx="1" fill="none" stroke="#334155" stroke-width="1"/></g>
+        <g transform="translate(225, 295)"><line x1="0" y1="0" x2="8" y2="0" stroke="#475569" stroke-width="1.5"/><path d="M 8 -7 C 5 -7, 5 7, 8 7" fill="none" stroke="#64748b" stroke-width="1.5"/></g>
+        <g transform="translate(245, 282)"><rect x="0" y="0" width="28" height="28" rx="4" fill="none" stroke="#475569" stroke-width="1.5"/><line x1="20" y1="4" x2="20" y2="24" stroke="#475569" stroke-width="1.5"/><rect x="5" y="-3" width="14" height="4" rx="1" fill="none" stroke="#334155" stroke-width="1"/><rect x="5" y="27" width="14" height="4" rx="1" fill="none" stroke="#334155" stroke-width="1"/></g>
+        <rect x="235" y="248" width="30" height="24" rx="2" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="2 2"/>
+        <g transform="translate(385, 0)">
+          <line x1="0" y1="145" x2="0" y2="225" stroke="#334155" stroke-width="1.5"/>
+          <path d="M 0 225 Q 4 232, 0 240" fill="none" stroke="#64748b" stroke-width="1.2"/>
+          <line x1="0" y1="295" x2="0" y2="375" stroke="#334155" stroke-width="1.5"/>
+          <path d="M 0 280 Q 4 288, 0 295" fill="none" stroke="#64748b" stroke-width="1.2"/>
+        </g>
+        <g transform="translate(415, 0)">
+          <use href="#b1_paxSeat" x="0" y="160"/><use href="#b1_paxSeat" x="0" y="185"/><use href="#b1_paxSeat" x="0" y="315"/><use href="#b1_paxSeat" x="0" y="340"/>
+          <use href="#b1_paxSeat" x="40" y="160"/><use href="#b1_paxSeat" x="40" y="185"/><use href="#b1_paxSeat" x="40" y="315"/><use href="#b1_paxSeat" x="40" y="340"/>
+          <use href="#b1_paxSeat" x="80" y="160"/><use href="#b1_paxSeat" x="80" y="185"/><use href="#b1_paxSeat" x="80" y="315"/><use href="#b1_paxSeat" x="80" y="340"/>
+          <use href="#b1_paxSeat" x="120" y="160"/><use href="#b1_paxSeat" x="120" y="185"/><use href="#b1_paxSeat" x="120" y="315"/><use href="#b1_paxSeat" x="120" y="340"/>
+          <use href="#b1_paxSeat" x="160" y="160"/><use href="#b1_paxSeat" x="160" y="185"/><use href="#b1_paxSeat" x="160" y="315"/><use href="#b1_paxSeat" x="160" y="340"/>
+          <use href="#b1_paxSeat" x="200" y="160"/><use href="#b1_paxSeat" x="200" y="185"/><use href="#b1_paxSeat" x="200" y="315"/><use href="#b1_paxSeat" x="200" y="340"/>
+          <use href="#b1_paxSeat" x="240" y="160"/><use href="#b1_paxSeat" x="240" y="185"/><use href="#b1_paxSeat" x="240" y="315"/><use href="#b1_paxSeat" x="240" y="340"/>
+          <use href="#b1_paxSeat" x="280" y="160"/><use href="#b1_paxSeat" x="280" y="185"/><use href="#b1_paxSeat" x="280" y="315"/><use href="#b1_paxSeat" x="280" y="340"/>
+          <line x1="-15" y1="260" x2="320" y2="260" stroke="#1e293b" stroke-width="1.5" stroke-dasharray="6 4"/>
+        </g>
+        <g id="b1_doorOld" style="transition: opacity 0.5s ease;">
+          <line x1="330" y1="145" x2="330" y2="375" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 4"/>
+          <path d="M 330 235 Arc 25 25 0 0 1 355 260" fill="none" stroke="#f59e0b" stroke-width="1" stroke-dasharray="2 2"/>
+          <text x="365" y="255" fill="#f59e0b" font-size="11" font-weight="600" letter-spacing="1">NON-BALLISTIC DIVIDER</text>
+          <text x="365" y="272" fill="#94a3b8" font-size="9" letter-spacing="0.5">(Decompression relief panels only)</text>
+        </g>
+        <g id="b1_doorNew" opacity="0" style="transition: opacity 0.5s ease;">
+          <line x1="330" y1="145" x2="330" y2="375" stroke="#0284c7" stroke-width="7"/>
+          <rect x="325" y="240" width="10" height="40" fill="#ef4444" rx="2"/>
+          <text x="365" y="255" fill="#0284c7" font-size="11" font-weight="600" letter-spacing="1">FAR 25.795 ARMORED PERIMETER</text>
+          <text x="365" y="272" fill="#ef4444" font-size="9" font-weight="600" letter-spacing="0.5">FAIL-LOCKED PARADOX: UNILATERAL PILOT DENY</text>
+        </g>
+      </g>
+    </svg>
+
+    <div class="phase-caption" id="b1_caption" style="border-left-color: var(--accent-blue);">
+      <strong>PHASE 1:</strong> Pre-2001 Baseline. Non-hardened divider separating cockpit from cabin.
+    </div>
+  </div>
+  <div class="controls">
+    <button id="b1_btn1" class="active-blue" onclick="setB1Phase(1)">1. Pre-2001 Baseline</button>
+    <button id="b1_btn2" onclick="setB1Phase(2)">2. September 11 Event</button>
+    <button id="b1_btn3" onclick="setB1Phase(3)">3. Post-2001 Hardening (FAR 25.795)</button>
+  </div>
+</div>
+
+<!-- ================= БЛОК 2: GERMANWINGS ================= -->
+<div id="block2" class="block-wrapper">
+  <div class="canvas-container">
+    <div class="grid-overlay"></div>
+    <div class="pane-header" id="b2_header">HISTORICAL CASE 2015 // GERMANWINGS 9525</div>
+    <div class="pane-status" id="b2_status">CRUISE FL380 // NORMAL FLIGHT</div>
+
+    <!-- Вид механики блокировки DENY -->
+    <div id="b2_viewLock" class="stage-view" style="opacity: 0; pointer-events: none;">
+      <svg viewBox="0 0 900 520">
+        <!-- Панель тумблера -->
+        <g transform="translate(100, 100)">
+          <rect x="0" y="0" width="220" height="260" rx="6" fill="#0b111e" stroke="#334155" stroke-width="1.5"/>
+          <text x="110" y="30" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600" letter-spacing="1">COCKPIT DOOR PANEL</text>
+          <text x="110" y="46" text-anchor="middle" fill="#475569" font-size="8">INTERIOR OVERRIDE</text>
+          <text x="110" y="85" text-anchor="middle" fill="#64748b" font-size="10">UNLK</text>
+          <text x="110" y="145" text-anchor="middle" fill="#10b981" font-size="10" font-weight="600">NORM</text>
+          <text x="110" y="205" text-anchor="middle" fill="#ef4444" font-size="10" font-weight="600">DENY</text>
+          <line x1="110" y1="95" x2="110" y2="190" stroke="#1e293b" stroke-width="6" stroke-linecap="round"/>
+          <g id="b2_switchHandle" transform="translate(110, 140)" style="transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);">
+            <circle cx="0" cy="0" r="14" fill="#334155" stroke="#64748b" stroke-width="2"/>
+            <circle cx="0" cy="0" r="5" fill="#e2e8f0"/>
+          </g>
+        </g>
+
+        <!-- Внешняя клавиатура (3x4) -->
+        <g transform="translate(360, 100)">
+          <rect x="0" y="0" width="200" height="260" rx="6" fill="#0b111e" stroke="#1e293b" stroke-width="1.5"/>
+          <text x="100" y="30" text-anchor="middle" fill="#64748b" font-size="10" letter-spacing="1">EXTERIOR KEYPAD</text>
+          <text x="100" y="46" text-anchor="middle" fill="#475569" font-size="8">PASSENGER CABIN SIDE</text>
+          <g transform="translate(45, 65)">
+            <rect id="b2_kp1" x="0" y="0" width="30" height="25" rx="3" fill="#1e293b"/>
+            <rect id="b2_kp2" x="40" y="0" width="30" height="25" rx="3" fill="#1e293b"/>
+            <rect id="b2_kp3" x="80" y="0" width="30" height="25" rx="3" fill="#1e293b"/>
+            <rect id="b2_kp4" x="0" y="35" width="30" height="25" rx="3" fill="#1e293b"/>
+            <rect id="b2_kp5" x="40" y="35" width="30" height="25" rx="3" fill="#1e293b"/>
+            <rect id="b2_kp6" x="80" y="35" width="30" height="25" rx="3" fill="#1e293b"/>
+            <rect id="b2_kp7" x="0" y="70" width="30" height="25" rx="3" fill="#1e293b"/>
+            <rect id="b2_kp8" x="40" y="70" width="30" height="25" rx="3" fill="#1e293b"/>
+            <rect id="b2_kp9" x="80" y="70" width="30" height="25" rx="3" fill="#1e293b"/>
+            <rect id="b2_kpStar" x="0" y="105" width="30" height="25" rx="3" fill="#1e293b"/>
+            <rect id="b2_kp0" x="40" y="105" width="30" height="25" rx="3" fill="#1e293b"/>
+            <rect id="b2_kpHash" x="80" y="105" width="30" height="25" rx="3" fill="#1e293b"/>
+          </g>
+          <text id="b2_keyAction" x="100" y="235" text-anchor="middle" fill="#64748b" font-size="10">STANDBY</text>
+        </g>
+
+        <!-- Контроллер замка и табло отказа -->
+        <g transform="translate(600, 100)">
+          <rect x="0" y="0" width="200" height="260" rx="6" fill="#0b111e" stroke="#1e293b" stroke-width="1.5"/>
+          <text x="100" y="30" text-anchor="middle" fill="#64748b" font-size="10" letter-spacing="1">ACCESS CONTROLLER</text>
+          <text x="100" y="46" text-anchor="middle" fill="#475569" font-size="8">CDLS HARDWARE STATUS</text>
+          <rect id="b2_denBox" x="20" y="75" width="160" height="45" rx="4" fill="#1e293b"/>
+          <text id="b2_denText" x="100" y="103" text-anchor="middle" fill="#475569" font-size="11" font-weight="700">STANDBY</text>
+          <text x="100" y="155" text-anchor="middle" fill="#64748b" font-size="9">LOCKOUT TIMER</text>
+          <text id="b2_digits" x="100" y="195" text-anchor="middle" fill="#475569" font-size="30" font-weight="700">--:--</text>
+          <text x="100" y="230" text-anchor="middle" fill="#475569" font-size="8">KEYPAD INHIBIT CYCLE</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Вид траектории спуска (ИСОВЕРШЕННО РОВНО ПО ПУНКТИРУ) -->
+    <div id="b2_viewTraj" class="stage-view" style="opacity: 1;">
+      <svg viewBox="0 0 900 520">
+        <line x1="60" y1="120" x2="840" y2="120" stroke="#1e293b" stroke-dasharray="4 4"/>
+        <text x="65" y="112" fill="#475569" font-size="10">FL380 (INITIAL CRUISE LEVEL)</text>
+        <line x1="60" y1="230" x2="840" y2="230" stroke="#1e293b" stroke-dasharray="4 4"/>
+        <text x="65" y="222" fill="#475569" font-size="10">FL150</text>
+        <line x1="60" y1="360" x2="840" y2="360" stroke="#1e293b" stroke-dasharray="4 4"/>
+        <text x="65" y="352" fill="#ef4444" font-size="10" font-weight="600">FCU TARGET: 100 FT (PROGRAMMED COLLISION VECTOR)</text>
+        
+        <path d="M 450 420 L 580 270 L 670 330 L 760 210 L 900 420 Z" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+        <text x="630" y="390" fill="#475569" font-size="11" letter-spacing="2">FRENCH ALPS RIDGE</text>
+        
+        <!-- Пунктирная траектория теперь идеальная прямая: от (80,120) до (720,230) -->
+        <path d="M 80 120 L 720 230" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="6 4"/>
+        
+        <g id="b2_plane" transform="translate(80, 120)">
+          <polygon id="b2_planePoly" points="0,-5 16,0 0,5 4,0" fill="#10b981"/>
+          <circle id="b2_planeCirc" cx="0" cy="0" r="14" fill="none" stroke="#10b981" stroke-width="1.5" opacity="0.6"/>
+        </g>
+        
+        <g transform="translate(65, 395)">
+          <rect x="0" y="0" width="280" height="48" rx="4" fill="#0b111e" stroke="#1e293b"/>
+          <text x="12" y="18" fill="#64748b" font-size="9">AUTOPILOT / OPEN DESCENT MODE</text>
+          <text id="b2_vs" x="12" y="36" fill="#10b981" font-size="12" font-weight="600">VS: 0 FT/MIN // LEVEL FLIGHT</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="phase-caption" id="b2_caption" style="border-left-color: var(--alert-red);">
+      <strong>PHASE 1:</strong> Initial flight state. Cruise flight at FL380.
+    </div>
+  </div>
+  <div class="controls">
+    <button id="b2_btn1" class="active-red" onclick="setB2Phase(1)">1. Normal Cruise</button>
+    <button id="b2_btn2" onclick="setB2Phase(2)">2. DENY Switch & Lockout Loop</button>
+    <button id="b2_btn3" onclick="setB2Phase(3)">3. Full-Screen Descent</button>
+  </div>
+</div>
+
+<!-- ================= БЛОК 3: TWO-PERSON RULE ================= -->
+<div id="block3" class="block-wrapper">
+  <div class="canvas-container">
+    <div class="grid-overlay"></div>
+    <div class="pane-header" id="b3_header">EASA SAFETY BULLETIN SIB 2015-04</div>
+    <div class="pane-status" id="b3_status">PROTOCOL: TWO-PERSON COCKPIT RULE</div>
+
+    <svg viewBox="0 0 900 520">
+      <defs>
+        <!-- Пилот -->
+        <g id="b3_figurePilot">
+          <circle cx="0" cy="-105" r="15" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
+          <rect x="-5" y="-90" width="10" height="8" fill="#1e293b"/>
+          <path d="M -26 -82 L 26 -82 L 20 -10 L -20 -10 Z" fill="#0b111e" stroke="#334155" stroke-width="1.5"/>
+          <line x1="-26" y1="-80" x2="-16" y2="-80" stroke="#eab308" stroke-width="3"/>
+          <line x1="-26" y1="-75" x2="-16" y2="-75" stroke="#eab308" stroke-width="2"/>
+          <line x1="16" y1="-80" x2="26" y2="-80" stroke="#eab308" stroke-width="3"/>
+          <line x1="16" y1="-75" x2="26" y2="-75" stroke="#eab308" stroke-width="2"/>
+          <polygon points="0,-82 -4,-45 0,-38 4,-45" fill="#334155"/>
+          <rect x="-18" y="-10" width="14" height="90" rx="3" fill="#0f172a" stroke="#334155" stroke-width="1.2"/>
+          <rect x="4" y="-10" width="14" height="90" rx="3" fill="#0f172a" stroke="#334155" stroke-width="1.2"/>
+          <rect x="-20" y="80" width="17" height="8" rx="2" fill="#1e293b"/>
+          <rect x="3" y="80" width="17" height="8" rx="2" fill="#1e293b"/>
+          <text x="0" y="105" text-anchor="middle" fill="#94a3b8" font-size="10" letter-spacing="1">CAPTAIN</text>
+        </g>
+
+        <!-- Бортпроводница -->
+        <g id="b3_figureAttendant">
+          <path d="M -13 -122 Q 0 -130 13 -122 L 10 -115 L -10 -115 Z" fill="#0284c7" stroke="#38bdf8" stroke-width="1"/>
+          <circle cx="0" cy="-103" r="14" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
+          <path d="M -8 -88 Q 0 -82 8 -88 L 0 -76 Z" fill="#ec4899"/>
+          <path d="M -22 -85 L 22 -85 L 16 -25 L -16 -25 Z" fill="#0b111e" stroke="#334155" stroke-width="1.5"/>
+          <path d="M -16 -25 L 16 -25 L 19 25 L -19 25 Z" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+          <rect x="-11" y="25" width="8" height="55" rx="2" fill="#0b111e" stroke="#334155" stroke-width="1"/>
+          <rect x="3" y="25" width="8" height="55" rx="2" fill="#0b111e" stroke="#334155" stroke-width="1"/>
+          <rect x="-13" y="80" width="11" height="7" rx="2" fill="#1e293b"/>
+          <rect x="2" y="80" width="11" height="7" rx="2" fill="#1e293b"/>
+          <text x="0" y="105" text-anchor="middle" fill="#94a3b8" font-size="10" letter-spacing="1">CABIN CREW</text>
+        </g>
+      </defs>
+
+      <!-- Контур вестибюля -->
+      <line x1="80" y1="410" x2="820" y2="410" stroke="#334155" stroke-width="2"/>
+      <line x1="80" y1="100" x2="820" y2="100" stroke="#1e293b" stroke-width="2"/>
+      <rect x="80" y="100" width="740" height="310" fill="#080d1a" stroke="#1e293b" stroke-width="1.5"/>
+
+      <!-- Дверь Туалета -->
+      <g transform="translate(620, 130)">
+        <rect x="0" y="0" width="130" height="280" fill="#0b111e" stroke="#334155" stroke-width="1.5"/>
+        <rect x="25" y="25" width="80" height="24" rx="3" fill="#1e293b"/>
+        <text x="65" y="41" text-anchor="middle" fill="#64748b" font-size="9" letter-spacing="1">LAVATORY</text>
+        <circle cx="65" cy="72" r="6" fill="none" stroke="#64748b" stroke-width="1.2"/>
+        <line x1="65" y1="80" x2="65" y2="100" stroke="#64748b" stroke-width="1.2"/>
+        <rect x="15" y="145" width="8" height="24" rx="2" fill="#475569"/>
+      </g>
+
+      <!-- Дверь Кокпита -->
+      <g transform="translate(240, 130)">
+        <rect x="-8" y="-8" width="176" height="296" fill="#090f1d" stroke="#0284c7" stroke-width="2"/>
+        <rect x="0" y="0" width="160" height="280" fill="#030712"/>
+        <g id="b3_doorLeaf" style="transform-origin: 0px 0px; transition: transform 0.8s ease;">
+          <rect x="0" y="0" width="160" height="280" fill="#0b111e" stroke="#0284c7" stroke-width="2"/>
+          <text x="80" y="41" text-anchor="middle" fill="#0284c7" font-size="9" font-weight="600" letter-spacing="1">COCKPIT ACCESS</text>
+          <rect id="b3_doorLatch" x="152" y="135" width="8" height="30" fill="#ef4444"/>
+        </g>
+      </g>
+
+      <!-- Модуль CDLS с 9-кнопочной панелью -->
+      <g transform="translate(425, 190)">
+        <rect x="0" y="0" width="85" height="150" rx="4" fill="#0b111e" stroke="#334155" stroke-width="1.5"/>
+        <circle id="b3_ledStatus" cx="42" cy="22" r="7" fill="#ef4444"/>
+        <text id="b3_ledLabel" x="42" y="42" text-anchor="middle" fill="#ef4444" font-size="8" font-weight="700">LOCKED</text>
+        <rect x="8" y="52" width="69" height="26" rx="3" fill="#141c2b" stroke="#1e293b"/>
+        <text id="b3_countdownDisplay" x="42" y="70" text-anchor="middle" fill="#475569" font-size="13" font-weight="700" font-family="monospace">--.-s</text>
+
+        <g transform="translate(20, 88)">
+          <rect id="b3_kp1" x="0" y="0" width="10" height="10" rx="1" fill="#1e293b"/>
+          <rect id="b3_kp2" x="16" y="0" width="10" height="10" rx="1" fill="#1e293b"/>
+          <rect id="b3_kp3" x="32" y="0" width="10" height="10" rx="1" fill="#1e293b"/>
+          <rect id="b3_kp4" x="0" y="14" width="10" height="10" rx="1" fill="#1e293b"/>
+          <rect id="b3_kp5" x="16" y="14" width="10" height="10" rx="1" fill="#1e293b"/>
+          <rect id="b3_kp6" x="32" y="14" width="10" height="10" rx="1" fill="#1e293b"/>
+          <rect id="b3_kp7" x="0" y="28" width="10" height="10" rx="1" fill="#1e293b"/>
+          <rect id="b3_kp8" x="16" y="28" width="10" height="10" rx="1" fill="#1e293b"/>
+          <rect id="b3_kp9" x="32" y="28" width="10" height="10" rx="1" fill="#1e293b"/>
+        </g>
+        <text x="42" y="138" text-anchor="middle" fill="#64748b" font-size="7">CDLS MODULE</text>
+      </g>
+
+      <!-- Персонажи с плавной анимацией перемещения -->
+      <g id="b3_actorAttendant" transform="translate(550, 315)" style="transition: transform 2.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;">
+        <use href="#b3_figureAttendant"/>
+      </g>
+      <g id="b3_actorPilot" transform="translate(320, 315)" opacity="0" style="transition: transform 2.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;">
+        <use href="#b3_figurePilot"/>
+      </g>
+    </svg>
+
+    <div class="phase-caption" id="b3_caption" style="border-left-color: var(--accent-blue);">
+      <strong>EASA SIB 2015-04 PROTOCOL:</strong> Following the Germanwings disaster, airlines enforced the "Two-Person Rule."
+    </div>
+  </div>
+  <div class="controls">
+    <button id="b3_btnFull" class="active-blue" onclick="triggerB3Mode('full')">Full Rotation Cycle</button>
+    <button id="b3_btnP1" onclick="triggerB3Mode('p1')">Phase 1: Pilot Departure</button>
+    <button id="b3_btnP2" onclick="triggerB3Mode('p2')">Phase 2: Pilot Return</button>
+  </div>
+</div>
+
+<!-- ================= БЛОК 4: FLYDUBAI ================= -->
+<div id="block4" class="block-wrapper">
+  <div class="canvas-container" style="display: flex;">
+    <div class="split-pane split-left">
+      <div class="grid-overlay"></div>
+      <div class="pane-header">FLIGHT DYNAMICS // FZ1073 (B737 MAX)</div>
+
+      <svg viewBox="0 0 450 520">
+        <line x1="30" y1="110" x2="420" y2="110" stroke="#1e293b" stroke-dasharray="3 3"/>
+        <text x="35" y="104" fill="#475569" font-size="9">FL340 (CRUISE VECTOR)</text>
+        <line x1="30" y1="230" x2="420" y2="230" stroke="#1e293b" stroke-dasharray="3 3"/>
+        <text x="35" y="224" fill="#475569" font-size="9">FL240 (STABILIZATION ALTITUDE)</text>
+        <line x1="30" y1="340" x2="420" y2="340" stroke="#1e293b" stroke-dasharray="3 3"/>
+        <text x="35" y="334" fill="#ef4444" font-size="9">FL180 (-5,000 M DIVE NADIR)</text>
+
+        <!-- Пунктирные траектории выправлены под идеальную прямую -->
+        <path id="b4_diveCurve" d="M 50 110 L 270 340" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="5 3"/>
+        <path id="b4_recoveryCurve" d="M 270 340 L 420 230" fill="none" stroke="#10b981" stroke-width="2.5" stroke-dasharray="5 3" opacity="0" style="transition: opacity 0.6s ease;"/>
+
+        <g id="b4_plane" transform="translate(50, 110)">
+          <polygon id="b4_planePoly" points="0,-4 14,0 0,4 3,0" fill="#ef4444"/>
+          <circle id="b4_planeCirc" cx="0" cy="0" r="11" fill="none" stroke="#ef4444" stroke-width="1.2" opacity="0.6"/>
+        </g>
+
+        <g transform="translate(35, 390)">
+          <rect x="0" y="0" width="170" height="46" rx="4" fill="#0b111e" stroke="#1e293b"/>
+          <text x="12" y="16" fill="#64748b" font-size="8">TRANSPONDER MODE S</text>
+          <text id="b4_squawkCode" x="12" y="36" fill="#10b981" font-size="16" font-weight="700" font-family="monospace">SQ: 4721</text>
+        </g>
+
+        <g id="b4_interceptorAlert" transform="translate(225, 390)" opacity="0" style="transition: opacity 0.5s ease;">
+          <rect id="b4_alertBox" x="0" y="0" width="180" height="46" rx="4" fill="#450a0a" stroke="#ef4444"/>
+          <text id="b4_alertSub" x="12" y="16" fill="#fca5a5" font-size="8">AIR DEFENSE SCRAMBLE</text>
+          <text id="b4_alertMain" x="12" y="34" fill="#ef4444" font-size="11" font-weight="700">ALERT INTERCEPT ACTIVE</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="split-pane split-right">
+      <div class="grid-overlay"></div>
+      <div class="pane-header">MECHANICAL ARBITRATION // DENY CONTEST</div>
+
+      <svg viewBox="0 0 450 520">
+        <g transform="translate(45, 75)">
+          <rect x="0" y="0" width="160" height="150" rx="4" fill="#0b111e" stroke="#1e293b"/>
+          <text x="80" y="20" text-anchor="middle" fill="#64748b" font-size="8">CONTROL COLUMN</text>
+          <line x1="80" y1="130" x2="80" y2="60" stroke="#334155" stroke-width="5"/>
+          <g id="b4_yokeHead" transform="translate(80, 60)" style="transition: transform 0.6s ease;">
+            <path d="M -30 -10 C -25 15, 25 15, 30 -10 C 25 -18, -25 -18, -30 -10 Z" fill="none" stroke="#64748b" stroke-width="2"/>
+          </g>
+          <text id="b4_yokeStatus" x="80" y="140" text-anchor="middle" fill="#ef4444" font-size="9" font-weight="600">DIVE FORCE: PUSH</text>
+        </g>
+
+        <!-- Тумблер -->
+        <g transform="translate(235, 75)">
+          <rect x="0" y="0" width="160" height="150" rx="4" fill="#0b111e" stroke="#334155"/>
+          <text x="80" y="20" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">CDLS SWITCH</text>
+          <text x="80" y="48" text-anchor="middle" fill="#64748b" font-size="8">UNLK</text>
+          <text x="80" y="84" text-anchor="middle" fill="#10b981" font-size="8">NORM</text>
+          <text x="80" y="120" text-anchor="middle" fill="#ef4444" font-size="8">DENY</text>
+          <line x1="80" y1="54" x2="80" y2="110" stroke="#1e293b" stroke-width="4" stroke-linecap="round"/>
+          <g id="b4_switchFlicker" transform="translate(80, 80)" style="transition: transform 0.15s ease;">
+            <circle cx="0" cy="0" r="10" fill="#334155" stroke="#64748b" stroke-width="1.5"/>
+            <circle cx="0" cy="0" r="4" fill="#e2e8f0"/>
+          </g>
+        </g>
+
+        <!-- 12-кнопочная клавиатура -->
+        <g transform="translate(45, 245)">
+          <rect x="0" y="0" width="160" height="190" rx="4" fill="#0b111e" stroke="#1e293b"/>
+          <text x="80" y="20" text-anchor="middle" fill="#64748b" font-size="8">EXTERIOR KEYPAD</text>
+          <g transform="translate(25, 32)">
+            <rect id="b4_kp1" x="0" y="0" width="30" height="22" rx="2" fill="#1e293b"/>
+            <rect id="b4_kp2" x="40" y="0" width="30" height="22" rx="2" fill="#1e293b"/>
+            <rect id="b4_kp3" x="80" y="0" width="30" height="22" rx="2" fill="#1e293b"/>
+            <rect id="b4_kp4" x="0" y="28" width="30" height="22" rx="2" fill="#1e293b"/>
+            <rect id="b4_kp5" x="40" y="28" width="30" height="22" rx="2" fill="#1e293b"/>
+            <rect id="b4_kp6" x="80" y="28" width="30" height="22" rx="2" fill="#1e293b"/>
+            <rect id="b4_kp7" x="0" y="56" width="30" height="22" rx="2" fill="#1e293b"/>
+            <rect id="b4_kp8" x="40" y="56" width="30" height="22" rx="2" fill="#1e293b"/>
+            <rect id="b4_kp9" x="80" y="56" width="30" height="22" rx="2" fill="#1e293b"/>
+            <rect id="b4_kpStar" x="0" y="84" width="30" height="22" rx="2" fill="#1e293b"/>
+            <rect id="b4_kp0" x="40" y="84" width="30" height="22" rx="2" fill="#1e293b"/>
+            <rect id="b4_kpHash" x="80" y="84" width="30" height="22" rx="2" fill="#1e293b"/>
+          </g>
+          <text id="b4_keypadAction" x="80" y="170" text-anchor="middle" fill="#64748b" font-size="9">STANDBY</text>
+        </g>
+
+        <g transform="translate(235, 245)">
+          <rect x="0" y="0" width="160" height="190" rx="4" fill="#0b111e" stroke="#1e293b"/>
+          <text x="80" y="20" text-anchor="middle" fill="#64748b" font-size="8">ACCESS CONTROLLER</text>
+          <rect id="b4_statusBox" x="15" y="45" width="130" height="42" rx="3" fill="#1e293b"/>
+          <text id="b4_statusBadge" x="80" y="71" text-anchor="middle" fill="#475569" font-size="11" font-weight="700">STANDBY</text>
+          <text x="80" y="115" text-anchor="middle" fill="#64748b" font-size="8">OVERRIDE TIMER</text>
+          <text id="b4_overrideDigits" x="80" y="148" text-anchor="middle" fill="#475569" font-size="24" font-weight="700">--s</text>
+          <text id="b4_latchNote" x="80" y="172" text-anchor="middle" fill="#64748b" font-size="7">CDLS ARBITRATION</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="phase-caption" id="b4_phaseCaption" style="border-left-color: var(--alert-red);">
+      <strong>INCIDENT CONTEXT (SEP 30, 2026):</strong> FlyDubai FZ1073 en route Dubai to Tel Aviv. Insider conflict begins in the cockpit at FL340.
+    </div>
+  </div>
+  <div class="controls">
+    <button id="b4_btnPlay" class="active-red" onclick="startFlyDubaiSequence()">Play FZ1073 Incident Telemetry</button>
+  </div>
+</div>
+
+<script>
+  // =========================================================================
+  // БРОНЕБОЙНЫЙ ДИСПЕТЧЕР ТАЙМЕРОВ (СЕЙЧАС ОШИБОК НЕ БУДЕТ)
+  // =========================================================================
+  let gTimeouts = [];
+  let gIntervals = [];
+
+  function killTimers() {
+    for (let t of gTimeouts) clearTimeout(t);
+    for (let i of gIntervals) clearInterval(i);
+    gTimeouts = [];
+    gIntervals = [];
+  }
+
+  function runT(fn, ms) {
+    const t = setTimeout(fn, ms);
+    gTimeouts.push(t);
+    return t;
+  }
+
+  function runI(fn, ms) {
+    const i = setInterval(fn, ms);
+    gIntervals.push(i);
+    return i;
+  }
+
+  function getE(id) {
+    return document.getElementById(id);
+  }
+
+  // =========================================================================
+  // ГЛАВНЫЙ ПЕРЕКЛЮЧАТЕЛЬ ЭПОХ
+  // =========================================================================
+  function selectBlock(n) {
+    killTimers();
+    for (let i = 1; i <= 4; i++) {
+      let nav = getE('mNav' + i);
+      let blk = getE('block' + i);
+      if (nav) nav.className = (i === n) ? "nav-btn active-nav" : "nav-btn";
+      if (blk) blk.className = (i === n) ? "block-wrapper active-block" : "block-wrapper";
+    }
+    if (n === 1) setB1Phase(1);
+    if (n === 2) setB2Phase(1);
+    if (n === 3) triggerB3Mode('full');
+    if (n === 4) startFlyDubaiSequence();
+  }
+
+  // =========================================================================
+  // БЛОК 1: PRE-2001
+  // =========================================================================
+  function setB1Phase(phase) {
+    killTimers();
+    for(let i=1; i<=3; i++) {
+      let btn = getE('b1_btn' + i);
+      if(btn) btn.className = (i === phase) ? "active-blue" : "";
+    }
+    
+    let radar = getE('b1_sceneRadar'), fuse = getE('b1_sceneFuselage'),
+        plane = getE('b1_radarPlane'), impact = getE('b1_impactMarker'),
+        doorOld = getE('b1_doorOld'), doorNew = getE('b1_doorNew'),
+        cap = getE('b1_caption'), stat = getE('b1_hudStatus');
+
+    if (phase === 1) {
+      stat.textContent = "CHRONOLOGY: PRE-2001 DIVISION";
+      radar.style.opacity = "0"; fuse.style.opacity = "1";
+      doorOld.style.opacity = "1"; doorNew.style.opacity = "0";
+      cap.style.borderLeftColor = "var(--accent-blue)";
+      cap.innerHTML = "<strong>PRE-2001 PERIMETER:</strong> Open architectural boundary. Dividers were non-reinforced, containing simple pressure-relief vents. Security relied entirely on flight protocol rather than electromechanical access resistance.";
+    } else if (phase === 2) {
+      stat.textContent = "CHRONOLOGY: SEP 11, 2001 (CRITICAL VECTOR)";
+      radar.style.opacity = "1"; fuse.style.opacity = "0";
+      plane.style.transition = "none";
+      plane.setAttribute("transform", "translate(120, 280)");
+      impact.style.opacity = "0";
+
+      runT(() => {
+        plane.style.transition = "transform 3.5s cubic-bezier(0.4, 0, 0.2, 1)";
+        plane.setAttribute("transform", "translate(605, 210)");
+      }, 50);
+
+      runT(() => { impact.style.opacity = "1"; }, 3300);
+      cap.style.borderLeftColor = "var(--alert-red)";
+      cap.innerHTML = "<strong>SEPTEMBER 11, 2001:</strong> Unlawful cabin intervention exposed the vulnerability of non-hardened dividers. Aircraft vector diverted into restricted urban airspace. Prompted global overhaul of cockpit security mandates.";
+    } else if (phase === 3) {
+      stat.textContent = "CHRONOLOGY: POST-9/11 MANDATE (FAR 25.795)";
+      radar.style.opacity = "0"; fuse.style.opacity = "1";
+      doorOld.style.opacity = "0"; doorNew.style.opacity = "1";
+      cap.style.borderLeftColor = "var(--alert-amber)";
+      cap.innerHTML = "<strong>POST-9/11 'FAIL-LOCKED' PARADOX:</strong> Regulators mandated ballistic composite doors and electronic locks. While preventing passenger invasion, it granted unilateral internal lockout power (DENY switch), creating the foundation for internal takeover risks.";
+    }
+  }
+
+  // =========================================================================
+  // БЛОК 2: GERMANWINGS
+  // =========================================================================
+  function setB2Phase(phase) {
+    killTimers();
+    for(let i=1; i<=3; i++) {
+      let btn = getE('b2_btn' + i);
+      if(btn) btn.className = (i === phase) ? "active-red" : "";
+    }
+    
+    let vTraj = getE('b2_viewTraj'), vLock = getE('b2_viewLock'), 
+        plane = getE('b2_plane'), pPoly = getE('b2_planePoly'), pCirc = getE('b2_planeCirc'), 
+        vs = getE('b2_vs'), hdr = getE('b2_header'), stat = getE('b2_status'), 
+        cap = getE('b2_caption'), swH = getE('b2_switchHandle');
+
+    if(phase === 1) {
+      hdr.textContent = "HISTORICAL CASE 2015 // GERMANWINGS 9525";
+      stat.textContent = "CRUISE FL380 // NORMAL FLIGHT";
+      vTraj.style.opacity = "1"; vTraj.style.pointerEvents = "auto";
+      vLock.style.opacity = "0"; vLock.style.pointerEvents = "none";
+      pPoly.setAttribute("fill", "#10b981"); pCirc.setAttribute("stroke", "#10b981");
+      plane.style.transition = "transform 1s ease";
+      plane.setAttribute("transform", "translate(80, 120)");
+      vs.textContent = "VS: 0 FT/MIN // LEVEL FLIGHT"; vs.setAttribute("fill", "#10b981");
+      
+      swH.style.transition = "none";
+      swH.setAttribute("transform", "translate(110, 140)");
+
+      cap.innerHTML = "<strong>PHASE 1 (BASELINE CRUISE):</strong> Normal cruising flight at 38,000 feet. The cockpit perimeter is intact with unilateral pilot authority.";
+    } else if(phase === 2) {
+      // ФАЗА 2: ТЕПЕРЬ ЭТО DENY SWITCH И БЛОКИРОВКА! (Поменяли местами по просьбе)
+      hdr.textContent = "ELECTROMECHANICAL PARADOX // UNILATERAL DENY";
+      stat.textContent = "EXTERNAL ATTEMPT REJECTED";
+      vTraj.style.opacity = "0"; vTraj.style.pointerEvents = "none";
+      vLock.style.opacity = "1"; vLock.style.pointerEvents = "auto";
+
+      swH.style.transition = "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)";
+      runT(() => {
+        swH.setAttribute("transform", "translate(110, 200)");
+      }, 50);
+
+      const kAct=getE('b2_keyAction'), dBox=getE('b2_denBox'), dTxt=getE('b2_denText'), digits=getE('b2_digits');
+      const keys = ['b2_kp2', 'b2_kp5', 'b2_kp8', 'b2_kpHash'];
+
+      keys.forEach(k => { let el = getE(k); if(el) el.setAttribute("fill", "#1e293b"); });
+      dBox.setAttribute("fill", "#1e293b"); dTxt.textContent = "STANDBY"; dTxt.setAttribute("fill", "#475569");
+      digits.textContent = "--:--"; digits.setAttribute("fill", "#475569");
+
+      kAct.textContent = "ENTERING MASTER CODE..."; kAct.setAttribute("fill", "#f59e0b");
+
+      let keyIdx = 0;
+      function pressNext() {
+        if (keyIdx < keys.length) {
+          let btn = getE(keys[keyIdx]);
+          if(btn) btn.setAttribute("fill", "#f59e0b");
+          runT(() => { if(btn) btn.setAttribute("fill", "#334155"); }, 250);
+          keyIdx++;
+          runT(pressNext, 400);
+        } else {
+          kAct.textContent = "ENTRY BLOCKED"; kAct.setAttribute("fill", "#ef4444");
+          dBox.setAttribute("fill", "#450a0a"); dTxt.textContent = "ACCESS DENIED"; dTxt.setAttribute("fill", "#ef4444");
+          let sec = 1200;
+          digits.setAttribute("fill", "#ef4444");
+          function upT() {
+            let m = Math.floor(sec / 60), s = sec % 60;
+            digits.textContent = (m<10?"0":"")+m + ":" + (s<10?"0":"")+s;
+            sec--;
+          }
+          upT();
+          runI(upT, 1000);
+        }
+      }
+      runT(pressNext, 600);
+      cap.innerHTML = "<strong>PHASE 2 (THE LOCKOUT CYCLE):</strong> The pilot moves the switch to DENY. Outside crew enters the code, but the system flashes ACCESS DENIED and triggers an automatic 20-minute keypad lockout timer, locking the perimeter shut.";
+    } else if(phase === 3) {
+      // ФАЗА 3: ТЕПЕРЬ ЭТО ФАТАЛЬНЫЙ СПУСК В АЛЬПЫ!
+      hdr.textContent = "FULL-SCREEN TRAJECTORY // DESCENT INTO THE ALPS";
+      stat.textContent = "FCU OVERRIDE: 100 FT TARGET";
+      vTraj.style.opacity = "1"; vTraj.style.pointerEvents = "auto";
+      vLock.style.opacity = "0"; vLock.style.pointerEvents = "none";
+      pPoly.setAttribute("fill", "#ef4444"); pCirc.setAttribute("stroke", "#ef4444");
+      
+      plane.style.transition = "none";
+      plane.setAttribute("transform", "translate(80, 120)");
+      
+      runT(() => {
+        plane.style.transition = "transform 6s cubic-bezier(0.25, 0.1, 0.25, 1)";
+        plane.setAttribute("transform", "translate(720, 230)"); // Идеально по прямой!
+      }, 50);
+
+      vs.textContent = "VS: -3,500 FT/MIN (MAX STEADY RATE)"; vs.setAttribute("fill", "#ef4444");
+      cap.innerHTML = "<strong>PHASE 3 (THE DESCENT VECTOR):</strong> Co-pilot sets the FCU target altitude to 100 ft. The aircraft executes a continuous, calculated descent along the programmed flight path toward the Alps.";
+    }
+  }
+
+  // =========================================================================
+  // БЛОК 3: TWO PERSON RULE
+  // =========================================================================
+  function triggerB3Mode(m) {
+    killTimers();
+    ['b3_btnFull','b3_btnP1','b3_btnP2'].forEach(id => { let el=getE(id); if(el) el.className=""; });
+
+    let door=getE('b3_doorLeaf'), led=getE('b3_ledStatus'), ledTxt=getE('b3_ledLabel'),
+        disp=getE('b3_countdownDisplay'), pilot=getE('b3_actorPilot'), crew=getE('b3_actorAttendant'), cap=getE('b3_caption');
+
+    getE('b3_header').textContent = "EASA SAFETY BULLETIN SIB 2015-04";
+    getE('b3_status').textContent = "PROTOCOL: TWO-PERSON COCKPIT RULE";
+
+    door.style.transform = "perspective(600px) rotateY(0deg)";
+    led.setAttribute("fill", "#ef4444"); ledTxt.textContent = "LOCKED"; ledTxt.setAttribute("fill", "#ef4444");
+    disp.textContent = "--.-s"; disp.setAttribute("fill", "#475569");
+
+    for(let i=1; i<=9; i++) { let k=getE('b3_kp'+i); if(k) k.setAttribute('fill', '#1e293b'); }
+
+    function startC(secs) {
+      let t = secs;
+      disp.textContent = (t<10?"0":"") + t.toFixed(1) + "s";
+      disp.setAttribute("fill", "#10b981");
+      runI(() => {
+        t -= 0.1;
+        if(t>=0) { disp.textContent = (t<10?"0":"") + t.toFixed(1) + "s"; }
+        else { disp.textContent = "EXPIRED"; disp.setAttribute("fill", "#ef4444"); }
+      }, 100);
+    }
+
+    if (m === 'full' || m === 'p1') {
+      if(m==='full') getE('b3_btnFull').className="active-blue";
+      if(m==='p1') getE('b3_btnP1').className="active-blue";
+
+      pilot.style.opacity = "0"; pilot.style.transform = "translate(320px, 315px)";
+      crew.style.opacity = "1"; crew.style.transform = "translate(550px, 315px)";
+      cap.style.borderLeftColor = "#0284c7";
+      cap.innerHTML = "<strong>PHASE 1 (DEPARTURE):</strong> Pilot requests exit. Cabin crew member steps in to maintain the mandatory 2-person presence inside the flight deck.";
+
+      runT(() => {
+        door.style.transform = "perspective(600px) rotateY(-75deg)";
+        led.setAttribute("fill", "#10b981"); ledTxt.textContent = "UNLK"; ledTxt.setAttribute("fill", "#10b981");
+        cap.style.borderLeftColor = "#f59e0b";
+        startC(5.0);
+        pilot.style.opacity = "1";
+      }, 1500);
+
+      runT(() => {
+        cap.innerHTML = "<strong>SWAP ROTATION:</strong> Pilot transitions to lavatory; flight attendant steps into the cockpit.";
+        pilot.style.transform = "translate(685px, 315px)";
+        crew.style.transform = "translate(310px, 315px)";
+      }, 2200);
+
+      runT(() => {
+        door.style.transform = "perspective(600px) rotateY(0deg)";
+        led.setAttribute("fill", "#ef4444"); ledTxt.textContent = "LOCKED"; ledTxt.setAttribute("fill", "#ef4444");
+        disp.textContent = "ARMED"; disp.setAttribute("fill", "#ef4444");
+        cap.style.borderLeftColor = "#ef4444";
+        cap.innerHTML = "<strong>SECURED:</strong> Cockpit re-locked with 2 persons inside (Co-pilot & Crew). Pilot is in lavatory.";
+        pilot.style.opacity = "0"; crew.style.opacity = "0";
+        if (m === 'full') runT(() => triggerB3Mode('p2'), 1800);
+      }, 6800);
+    } else if (m === 'p2') {
+      getE('b3_btnP2').className="active-blue";
+      pilot.style.opacity = "0"; pilot.style.transform = "translate(685px, 315px)";
+      crew.style.opacity = "0"; crew.style.transform = "translate(300px, 315px)";
+      cap.style.borderLeftColor = "#0284c7";
+      cap.innerHTML = "<strong>PHASE 2 (RETURN CYCLE):</strong> The captain finishes and approaches the cockpit security door.";
+
+      runT(() => {
+        pilot.style.opacity = "1";
+        cap.innerHTML = "<strong>CAPTAIN EXITS:</strong> Captain emerges from the lavatory and moves toward the forward vestibule.";
+      }, 800);
+      runT(() => { pilot.style.transform = "translate(540px, 315px)"; }, 1600);
+      runT(() => {
+        cap.innerHTML = "<strong>CODE ENTRY:</strong> Pilot inputs standard access credentials on the exterior keypad.";
+        cap.style.borderLeftColor = "#f59e0b";
+        let kIdx = 0; const ks = ['b3_kp2','b3_kp5','b3_kp8','b3_kp6'];
+        function pNk() {
+          if(kIdx < ks.length) {
+            let b = getE(ks[kIdx]);
+            if(b) b.setAttribute('fill', '#f59e0b');
+            runT(() => { if(b) b.setAttribute('fill', '#334155'); }, 200);
+            kIdx++;
+            runT(pNk, 300);
+          }
+        }
+        pNk();
+      }, 3200);
+      runT(() => {
+        door.style.transform = "perspective(600px) rotateY(-75deg)";
+        led.setAttribute("fill", "#10b981"); ledTxt.textContent = "UNLK"; ledTxt.setAttribute("fill", "#10b981");
+        startC(5.0);
+        crew.style.opacity = "1";
+        cap.innerHTML = "<strong>DOOR RELEASE:</strong> Solenoids drop for 5 seconds. Cabin crew initiates exchange rotation.";
+      }, 4800);
+      runT(() => {
+        crew.style.transform = "translate(550px, 315px)";
+        pilot.style.transform = "translate(310px, 315px)";
+      }, 5400);
+      runT(() => {
+        door.style.transform = "perspective(600px) rotateY(0deg)";
+        led.setAttribute("fill", "#ef4444"); ledTxt.textContent = "LOCKED"; ledTxt.setAttribute("fill", "#ef4444");
+        disp.textContent = "ARMED"; disp.setAttribute("fill", "#0284c7");
+        cap.style.borderLeftColor = "#10b981";
+        pilot.style.opacity = "0"; crew.style.opacity = "1";
+        cap.innerHTML = "<strong>PERIMETER RESTORED:</strong> Both flight crew members are re-seated in the cockpit. The perimeter is securely locked.";
+      }, 8600);
+    }
+  }
+
+  // =========================================================================
+  // БЛОК 4: FLYDUBAI
+  // =========================================================================
+  function startFlyDubaiSequence() {
+    killTimers();
+    getE('b4_btnPlay').className = "active-red";
+
+    let plane=getE('b4_plane'), pPoly=getE('b4_planePoly'), pCirc=getE('b4_planeCirc'),
+        sq=getE('b4_squawkCode'), inter=getE('b4_interceptorAlert'), aBox=getE('b4_alertBox'), aSub=getE('b4_alertSub'), aMain=getE('b4_alertMain'),
+        recov=getE('b4_recoveryCurve'), sw=getE('b4_switchFlicker'), kAct=getE('b4_keypadAction'), sBox=getE('b4_statusBox'), sBdg=getE('b4_statusBadge'),
+        dig=getE('b4_overrideDigits'), lNot=getE('b4_latchNote'), yHd=getE('b4_yokeHead'), yStat=getE('b4_yokeStatus'),
+        lStat=getE('b4_leftStatus'), rStat=getE('b4_rightStatus'), cap=getE('b4_phaseCaption');
+
+    const ks = ['b4_kp2', 'b4_kp5', 'b4_kp8', 'b4_kpHash'];
+    ks.forEach(k => { let el=getE(k); if(el) el.setAttribute('fill', '#1e293b'); });
+
+    plane.style.transition = "none"; plane.setAttribute("transform", "translate(50, 110) rotate(0)");
+    pPoly.setAttribute('fill', '#ef4444'); pCirc.setAttribute('stroke', '#ef4444');
+    recov.style.opacity = "0";
+
+    sq.textContent = "SQ: 4721"; sq.setAttribute("fill", "#10b981");
+    inter.style.opacity = "0";
+    aBox.setAttribute("fill", "#450a0a"); aBox.setAttribute("stroke", "#ef4444");
+    aSub.textContent = "AIR DEFENSE SCRAMBLE"; aSub.setAttribute("fill", "#fca5a5");
+    aMain.textContent = "ALERT INTERCEPT ACTIVE"; aMain.setAttribute("fill", "#ef4444");
+
+    sw.setAttribute("transform", "translate(80, 80)");
+    yHd.setAttribute("transform", "translate(80, 60)");
+    yStat.textContent = "DIVE FORCE: PUSH"; yStat.setAttribute("fill", "#ef4444");
+
+    kAct.textContent = "STANDBY"; kAct.setAttribute("fill", "#64748b");
+    sBox.setAttribute("fill", "#1e293b");
+    sBdg.textContent = "STANDBY"; sBdg.setAttribute("fill", "#475569");
+    dig.textContent = "--s"; dig.setAttribute("fill", "#475569");
+    lNot.textContent = "CDLS ARBITRATION"; lNot.setAttribute("fill", "#64748b");
+
+    cap.style.borderLeftColor = "#0284c7";
+    cap.innerHTML = "<strong>INCIDENT CONTEXT (SEP 30, 2026):</strong> FlyDubai FZ1073 en route Dubai to Tel Aviv. Insider conflict begins in the cockpit at FL340.";
+
+    runT(() => {
+      cap.style.borderLeftColor = "#f59e0b";
+      cap.innerHTML = "<strong>CRITICAL DIVE & STRUGGLE:</strong> Aircraft forced into steep dive. Inside the cockpit, a physical fight breaks out: the attacker cannot hold the DENY switch continuously.";
+
+      plane.style.transition = "transform 4.8s cubic-bezier(0.25, 0.1, 0.25, 1)";
+      plane.setAttribute("transform", "translate(270, 340) rotate(22)"); // Летит идеально по прямой линии
+
+      sq.textContent = "SQ: 7700 (EMERG)"; sq.setAttribute("fill", "#f59e0b");
+
+      let tg = false;
+      runI(() => {
+        sw.setAttribute("transform", tg ? "translate(80, 110)" : "translate(80, 80)");
+        tg = !tg;
+      }, 200);
+    }, 1000);
+
+    runT(() => {
+      sq.textContent = "SQ: 7500 (HIJACK)"; sq.setAttribute("fill", "#ef4444");
+      inter.style.opacity = "1";
+    }, 2200);
+
+    runT(() => {
+      kAct.textContent = "INPUTTING CODE IN UNSTABLE WINDOW...";
+      kAct.setAttribute("fill", "#f59e0b");
+      let kI = 0;
+      function pN() {
+        if (kI < ks.length) {
+          let b = getE(ks[kI]);
+          if(b) b.setAttribute("fill", "#f59e0b");
+          runT(() => { if(b) b.setAttribute("fill", "#334155"); }, 180);
+          kI++;
+          runT(pN, 300);
+        }
+      }
+      pN();
+    }, 3000);
+
+    runT(() => {
+      killTimers(); // БОЛЬШЕ НЕТ ОШИБОК REFERENCE ERROR! 
+      sw.setAttribute("transform", "translate(80, 80)");
+
+      kAct.textContent = "CODE ACCEPTED"; kAct.setAttribute("fill", "#10b981");
+      sBox.setAttribute("fill", "#064e3b");
+      sBdg.textContent = "ACCESS GRANTED"; sBdg.setAttribute("fill", "#34d399");
+
+      yHd.setAttribute("transform", "translate(80, 75)");
+      yStat.textContent = "RECOVERY: PULL UP"; yStat.setAttribute("fill", "#10b981");
+
+      recov.style.opacity = "1";
+      plane.style.transition = "transform 3.5s cubic-bezier(0.1, 0.8, 0.3, 1)";
+      plane.setAttribute("transform", "translate(420, 230) rotate(-8)"); // Ровно по пунктиру
+      pPoly.setAttribute('fill', '#10b981'); pCirc.setAttribute('stroke', '#10b981');
+
+      aBox.setAttribute("fill", "#064e3b"); aBox.setAttribute("stroke", "#10b981");
+      aSub.textContent = "COCKPIT RECOVERED"; aSub.setAttribute("fill", "#6ee7b7");
+      aMain.textContent = "AIRCRAFT STABILIZED"; aMain.setAttribute("fill", "#34d399");
+
+      let c = 5;
+      dig.textContent = "05s"; dig.setAttribute("fill", "#10b981");
+      lNot.textContent = "SOLENOIDS RELEASED"; lNot.setAttribute("fill", "#34d399");
+
+      // Снова запускаем безопасный таймер после очистки
+      runI(() => {
+        c--;
+        if (c >= 0) dig.textContent = (c < 10 ? "0" : "") + c + "s";
+      }, 1000);
+
+      cap.innerHTML = "<strong>ACCESS GRANTED & RECOVERY:</strong> Unstable switch allowed the external code to unlock the door. Crew and passenger pilots breached the flight deck and pulled up into stable flight.";
+      cap.style.borderLeftColor = "#10b981";
+    }, 5200);
+  }
+
+  // Запуск при старте
+  selectBlock(1);
+</script>
+</body>
+</html>
