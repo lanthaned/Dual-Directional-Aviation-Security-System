@@ -34,7 +34,7 @@ The collected information is digitally signed and sent through ACARS and CPDLC. 
 
 ## Interactive Simulations
 
-*(Note: Click the links below to launch interactive engineering visualizations of the system's core protocols).*
+*(Note: Click the links below to launch interactive engineering visualizations of the system's core protocols. **For mobile viewing, please rotate your device to horizontal / landscape orientation** to prevent text from overlapping the graphics).*
 
 * 🚀 **[Simulation 1: History of the Airplane Security](./simulation1_history.html)**
 * 🚀 **[Simulation 2: Unlocking protocol 3-out-of-3 (Shamir scheme)](./simulation2_shamir_scheme.html)**
