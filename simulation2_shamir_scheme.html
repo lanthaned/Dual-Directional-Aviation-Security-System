@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unlocking Protocol 3-out-of-3 (Shamir Scheme)</title>
+<style>
+  :root {
+    --bg-light: #f8fafc;
+    --blueprint-grid: #e2e8f0;
+    --panel-border: #94a3b8;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --accent-blue: #0284c7;
+    --line-idle: #cbd5e1;
+    --status-red: #ef4444;
+    --status-amber: #f59e0b;
+    --status-green: #10b981;
+    --purple-agent: #9333ea;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--bg-light);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    padding: 15px 10px 40px;
+    overflow-x: hidden;
+  }
+
+  /* ВЕРХНЕЕ МЕНЮ ПЕРЕКЛЮЧЕНИЯ ДВУХ СЦЕН (Адаптивное) */
+  .master-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    max-width: 900px;
+    width: 100%;
+    z-index: 50;
+  }
+
+  .master-toggle button {
+    background: #ffffff;
+    border: 1.5px solid var(--panel-border);
+    color: var(--text-secondary);
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    transition: all 0.2s;
+  }
+
+  .master-toggle button:hover {
+    background: #f1f5f9;
+    border-color: var(--accent-blue);
+  }
+
+  .master-toggle button.active-view {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+  }
+
+  .scene-block {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .scene-block.active-scene {
+    display: flex;
+  }
+
+  /* Идеально адаптивный контейнер */
+  .canvas-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 900 / 520;
+    background: #ffffff;
+    border: 2px solid var(--panel-border);
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+    container-type: inline-size;
+  }
+
+  .grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, var(--blueprint-grid) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--blueprint-grid) 1px, transparent 1px);
+    background-size: 25px 25px;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  /* Тексты масштабируются сами через cqw (container query width) */
+  .pane-header {
+    position: absolute;
+    top: 4cqw;
+    left: 4cqw;
+    font-size: clamp(8px, 1.8cqw, 11px);
+    letter-spacing: 2px;
+    font-weight: 700;
+    color: var(--accent-blue);
+    z-index: 10;
+  }
+
+  .pane-status {
+    position: absolute;
+    top: 4cqw;
+    right: 4cqw;
+    font-size: clamp(8px, 1.8cqw, 11px);
+    letter-spacing: 1px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    z-index: 10;
+  }
+
+  /* ПЛАШКИ ОПУЩЕНЫ В САМЫЙ НИЗ И ПРИЖАТЫ К КРАЯМ */
+  .phase-caption {
+    position: absolute;
+    bottom: 1.5cqw; 
+    left: 2.5cqw; 
+    right: 2.5cqw;
+    background: #ffffff;
+    border: 1px solid var(--blueprint-grid);
+    border-left: 4px solid var(--accent-blue);
+    padding: 1.5cqw 2cqw;
+    border-radius: 0 6px 6px 0;
+    font-size: clamp(9px, 2.2cqw, 13px);
+    line-height: 1.5;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    z-index: 20;
+    transition: border-color 0.4s;
+  }
+
+  svg { width: 100%; height: 100%; display: block; position: absolute; inset: 0; }
+
+  /* Кнопки жестко вынесены вниз, чтобы не перекрываться графикой */
+  .controls {
+    margin-top: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    z-index: 60;
+  }
+
+  .controls button {
+    background: #ffffff;
+    border: 1.5px solid var(--panel-border);
+    color: var(--text-primary);
+    padding: 10px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    transition: all 0.2s;
+  }
+
+  .controls button:hover {
+    background: #f1f5f9;
+    border-color: var(--accent-blue);
+  }
+
+  .controls button.active {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: #ffffff;
+  }
+
+  /* Классы для анимаций второй сцены */
+  .actor {
+    transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+  }
+
+  .key-card {
+    transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+  }
+</style>
+</head>
+<body>
+
+<!-- ГЛАВНОЕ МЕНЮ ВЫБОРА РЕЖИМА -->
+<div class="master-toggle">
+  <button id="tabBtn1" class="active-view" onclick="switchMasterView(1)">1. Cryptographic Quorum (Hardware Core)</button>
+  <button id="tabBtn2" onclick="switchMasterView(2)">2. Physical Distribution (Cabin HSM Placement)</button>
+</div>
+
+<!-- ========================================================================= -->
+<!-- РЕЖИМ 1: СХЕМА ШАМИРА                                                     -->
+<!-- ========================================================================= -->
+<div id="sceneView1" class="scene-block active-scene">
+  <div class="canvas-container">
+    <div class="grid-overlay"></div>
+    <div class="pane-header">CYBER-PHYSICAL UNLOCKING // 3-OUT-OF-3 PROTOCOL</div>
+    <div class="pane-status" id="sc1_hudStatus">STATUS: ALL SHARES DISCONNECTED</div>
+
+    <svg viewBox="0 0 900 520">
+      <defs>
+        <g id="sc1_tokenUsb">
+          <rect x="35" y="-7" width="14" height="14" rx="1" fill="#cbd5e1" stroke="#64748b" stroke-width="1.5"/>
+          <line x1="42" y1="-3" x2="42" y2="3" stroke="#94a3b8" stroke-width="1.5"/>
+          <rect x="-35" y="-14" width="70" height="28" rx="4" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+          <circle cx="-22" cy="0" r="3" fill="#64748b"/>
+        </g>
+      </defs>
+
+      <rect x="230" y="90" width="440" height="300" rx="16" fill="#f8fafc" stroke="#64748b" stroke-width="2" stroke-dasharray="8 4"/>
+      <text x="450" y="115" text-anchor="middle" fill="#64748b" font-size="10" font-weight="700" letter-spacing="1.5">CRYPTOGRAPHIC ARBITRATION ENCLOSURE</text>
+
+      <rect x="220" y="150" width="12" height="20" rx="2" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
+      <text x="255" y="150" fill="#64748b" font-size="9" font-weight="600">LINE 1 (s₁)</text>
+
+      <rect x="220" y="310" width="12" height="20" rx="2" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
+      <text x="255" y="335" fill="#64748b" font-size="9" font-weight="600">LINE 2 (s₂)</text>
+
+      <rect x="668" y="230" width="12" height="20" rx="2" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
+      <text x="635" y="222" text-anchor="end" fill="#64748b" font-size="9" font-weight="600">LINE 3 (s₃)</text>
+
+      <path id="sc1_wireLine1" d="M 230 160 L 370 160 L 450 240" fill="none" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+      <path id="sc1_wireLine2" d="M 230 320 L 370 320 L 450 240" fill="none" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+      <path id="sc1_wireLine3" d="M 670 240 L 450 240" fill="none" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+
+      <g transform="translate(450, 240)">
+        <circle id="sc1_coreRing" cx="0" cy="0" r="42" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+        <circle id="sc1_coreHub" cx="0" cy="0" r="34" fill="#ffffff" stroke="#94a3b8" stroke-width="3"/>
+        <text id="sc1_coreStatusText" x="0" y="5" text-anchor="middle" fill="#64748b" font-size="10" font-weight="700">STANDBY</text>
+      </g>
+
+      <g id="sc1_tokenS1" transform="translate(130, 160)" style="transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);">
+        <use href="#sc1_tokenUsb"/>
+        <text x="-5" y="4" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="700">s₁ TOKEN</text>
+        <text x="-5" y="-18" text-anchor="middle" fill="#0284c7" font-size="8" font-weight="600">SENIOR CREW</text>
+      </g>
+
+      <g id="sc1_tokenS2" transform="translate(130, 320)" style="transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);">
+        <use href="#sc1_tokenUsb"/>
+        <text x="-5" y="4" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="700">s₂ TOKEN</text>
+        <text x="-5" y="32" text-anchor="middle" fill="#0284c7" font-size="8" font-weight="600">JUNIOR CREW</text>
+      </g>
+
+      <g id="sc1_tokenS3" transform="translate(770, 240) scale(-1, 1)" style="transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);">
+        <use href="#sc1_tokenUsb"/>
+        <text x="-5" y="4" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="700" transform="scale(-1, 1)">s₃ TOKEN</text>
+        <text x="-5" y="-18" text-anchor="middle" fill="#0284c7" font-size="8" font-weight="600" transform="scale(-1, 1)">GROUND HSM</text>
+      </g>
+    </svg>
+
+    <div class="phase-caption" id="sc1_phaseCaption">
+      <strong>SHAMIR THRESHOLD (k=3, n=3):</strong> All three cryptographic shares are disconnected. The door lock remains in its default secure state.
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="sc1_btn1" class="active" onclick="setSchemeState(1)">1. Standby (Disconnected)</button>
+    <button id="sc1_btn2" onclick="setSchemeState(2)">2. Coercion Attempt (s₁ + s₂ Only)</button>
+    <button id="sc1_btn3" onclick="setSchemeState(3)">3. Full Quorum (s₁ + s₂ + s₃ Unlocked)</button>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- РЕЖИМ 2: ЗАКЛАДКА КЛЮЧЕЙ НА БОРТУ                                         -->
+<!-- ========================================================================= -->
+<div id="sceneView2" class="scene-block">
+  <div class="canvas-container">
+    <div class="grid-overlay"></div>
+    <div class="pane-header">SECRET SHARING PROTOCOL // PRE-FLIGHT DISTRIBUTION</div>
+    <div class="pane-status" id="sc2_hudStatus">PHASE 1: GROUND SERVICE s3 PLACEMENT</div>
+
+    <svg viewBox="0 0 900 520">
+      <g id="sc2_aircraftBlueprint">
+        <!-- Внешний контур фюзеляжа (Нос конусом, салон идеальным прямоугольником) -->
+        <path d="M 100 260 Q 130 100 250 100 L 820 100 L 820 420 L 250 420 Q 130 420 100 260 Z" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+        
+        <!-- Носовая часть / Кабина (Cockpit) -->
+        <path d="M 100 260 Q 130 100 250 100 L 250 420 Q 130 420 100 260 Z" fill="#e2e8f0" stroke="#94a3b8" stroke-dasharray="4 2"/>
+        <text x="140" y="265" fill="#64748b" font-size="11" font-weight="700" letter-spacing="2">COCKPIT</text>
+
+        <!-- Бронированная дверь (ровно на границе кабины и прямоугольного салона) -->
+        <line x1="250" y1="100" x2="250" y2="420" stroke="#0284c7" stroke-width="4"/>
+        <text x="235" y="200" fill="#0284c7" font-size="9" transform="rotate(-90, 235, 200)" font-weight="700" letter-spacing="1">FAR 25.795 ARMORED DOOR</text>
+
+        <!-- Схематичные кресла -->
+        <g fill="#ffffff" stroke="#cbd5e1">
+          <rect x="280" y="115" width="28" height="45" rx="3"/><rect x="320" y="115" width="28" height="45" rx="3"/>
+          <rect x="370" y="115" width="28" height="45" rx="3"/><rect x="410" y="115" width="28" height="45" rx="3"/>
+          <rect x="460" y="115" width="28" height="45" rx="3"/><rect x="500" y="115" width="28" height="45" rx="3"/>
+          <rect x="550" y="115" width="28" height="45" rx="3"/><rect x="590" y="115" width="28" height="45" rx="3"/>
+          <rect x="640" y="115" width="28" height="45" rx="3"/><rect x="680" y="115" width="28" height="45" rx="3"/>
+
+          <rect x="280" y="360" width="28" height="45" rx="3"/><rect x="320" y="360" width="28" height="45" rx="3"/>
+          <rect x="370" y="360" width="28" height="45" rx="3"/><rect x="410" y="360" width="28" height="45" rx="3"/>
+          <rect x="460" y="360" width="28" height="45" rx="3"/><rect x="500" y="360" width="28" height="45" rx="3"/>
+          <rect x="550" y="360" width="28" height="45" rx="3"/><rect x="590" y="360" width="28" height="45" rx="3"/>
+          <rect x="640" y="360" width="28" height="45" rx="3"/><rect x="680" y="360" width="28" height="45" rx="3"/>
+        </g>
+
+        <!-- Центральный проход (Path Line) -->
+        <line x1="250" y1="260" x2="800" y2="260" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4 4"/>
+
+        <!-- Скрытый отсек HSM для ключа s3 -->
+        <g id="sc2_hsmCompartment" transform="translate(535, 315)">
+          <rect x="0" y="0" width="55" height="35" rx="5" fill="#ffffff" stroke="#d97706" stroke-width="2" stroke-dasharray="3 2"/>
+          <text x="7" y="21" fill="#d97706" font-size="10" font-weight="700">HSM s3</text>
+        </g>
+      </g>
+
+      <g id="sc2_interactiveActorsLayer">
+        <!-- 1. Наземный агент -->
+        <g id="sc2_groundAgent" class="actor" transform="translate(830, 260)" opacity="1">
+          <circle cx="0" cy="0" r="12" fill="#9333ea" stroke="#ffffff" stroke-width="2"/>
+          <path d="M -16 18 C -16 8, 16 8, 16 18 Z" fill="#9333ea" stroke="#ffffff" stroke-width="1"/>
+          <text x="-32" y="-18" fill="#9333ea" font-size="10" font-weight="800">GROUND AGENT</text>
+        </g>
+
+        <!-- 2. Старший бортпроводник (Senior FA) -->
+        <g id="sc2_seniorFA" class="actor" transform="translate(830, 260)" opacity="0">
+          <circle cx="0" cy="0" r="12" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+          <path d="M -16 18 C -16 8, 16 8, 16 18 Z" fill="#0284c7" stroke="#ffffff" stroke-width="1"/>
+          <text x="-28" y="-18" fill="#0284c7" font-size="10" font-weight="800">SENIOR FA</text>
+        </g>
+
+        <!-- 3. Младший бортпроводник (Junior FA) -->
+        <g id="sc2_juniorFA" class="actor" transform="translate(830, 260)" opacity="0">
+          <circle cx="0" cy="0" r="12" fill="#16a34a" stroke="#ffffff" stroke-width="2"/>
+          <path d="M -16 18 C -16 8, 16 8, 16 18 Z" fill="#16a34a" stroke="#ffffff" stroke-width="1"/>
+          <text x="-28" y="-18" fill="#16a34a" font-size="10" font-weight="800">JUNIOR FA</text>
+        </g>
+
+        <g id="sc2_keyS3" class="key-card" transform="translate(830, 235)" opacity="1">
+          <rect x="-15" y="-9" width="30" height="18" rx="3" fill="#d97706" stroke="#ffffff" stroke-width="2"/>
+          <text x="-8" y="4" fill="#ffffff" font-size="10" font-weight="800">s3</text>
+        </g>
+
+        <g id="sc2_keyS1" class="key-card" transform="translate(320, 235)" opacity="0">
+          <rect x="-15" y="-9" width="30" height="18" rx="3" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+          <text x="-8" y="4" fill="#ffffff" font-size="10" font-weight="800">s1</text>
+        </g>
+
+        <g id="sc2_keyS2" class="key-card" transform="translate(750, 235)" opacity="0">
+          <rect x="-15" y="-9" width="30" height="18" rx="3" fill="#16a34a" stroke="#ffffff" stroke-width="2"/>
+          <text x="-8" y="4" fill="#ffffff" font-size="10" font-weight="800">s2</text>
+        </g>
+      </g>
+    </svg>
+
+    <div class="phase-caption" id="sc2_phaseCaption">
+      <strong>PHASE 1:</strong> Ground Security enters the empty cabin, locates the hidden HSM compartment, inserts Key Share 3 (s3), and leaves the plane before crew boarding.
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="sc2_btn1" class="active" onclick="setDistPhase(1)">1. Ground Agent Places s3</button>
+    <button id="sc2_btn2" onclick="setDistPhase(2)">2. Senior FA Boards -> Recv s1</button>
+    <button id="sc2_btn3" onclick="setDistPhase(3)">3. Junior FA Boards -> Recv s2</button>
+  </div>
+</div>
+
+<script>
+  let sc2_timer1 = null;
+  let sc2_timer2 = null;
+
+  // ПЕРЕКЛЮЧЕНИЕ МЕЖДУ СЦЕНАМИ
+  function switchMasterView(viewNum) {
+    clearTimeout(sc2_timer1);
+    clearTimeout(sc2_timer2);
+
+    document.getElementById('tabBtn1').classList.toggle('active-view', viewNum === 1);
+    document.getElementById('tabBtn2').classList.toggle('active-view', viewNum === 2);
+
+    document.getElementById('sceneView1').classList.toggle('active-scene', viewNum === 1);
+    document.getElementById('sceneView2').classList.toggle('active-scene', viewNum === 2);
+
+    if (viewNum === 1) setSchemeState(1);
+    if (viewNum === 2) setDistPhase(1);
+  }
+
+  // =========================================================================
+  // ЛОГИКА 1-Й СЦЕНЫ: СХЕМА ШАМИРА
+  // =========================================================================
+  function setSchemeState(state) {
+    document.querySelectorAll('#sceneView1 .controls button').forEach((b, i) => {
+      b.classList.toggle('active', i + 1 === state);
+    });
+
+    const t1 = document.getElementById('sc1_tokenS1');
+    const t2 = document.getElementById('sc1_tokenS2');
+    const t3 = document.getElementById('sc1_tokenS3');
+
+    const w1 = document.getElementById('sc1_wireLine1');
+    const w2 = document.getElementById('sc1_wireLine2');
+    const w3 = document.getElementById('sc1_wireLine3');
+
+    const coreHub = document.getElementById('sc1_coreHub');
+    const coreRing = document.getElementById('sc1_coreRing');
+    const coreText = document.getElementById('sc1_coreStatusText');
+    const hudStatus = document.getElementById('sc1_hudStatus');
+    const caption = document.getElementById('sc1_phaseCaption');
+
+    if (state === 1) {
+      t1.style.transform = "translate(130px, 160px)";
+      t2.style.transform = "translate(130px, 320px)";
+      t3.style.transform = "translate(770px, 240px) scale(-1, 1)";
+
+      w1.setAttribute("stroke", "#cbd5e1");
+      w2.setAttribute("stroke", "#cbd5e1");
+      w3.setAttribute("stroke", "#cbd5e1");
+
+      coreHub.setAttribute("fill", "#ffffff");
+      coreHub.setAttribute("stroke", "#94a3b8");
+      coreRing.setAttribute("stroke", "#e2e8f0");
+      coreText.textContent = "STANDBY";
+      coreText.setAttribute("fill", "#64748b");
+
+      hudStatus.textContent = "STATUS: ALL SHARES DISCONNECTED";
+      caption.innerHTML = "<strong>BASELINE:</strong> Master key is mathematically split into 3 parts. No single crew member holds complete access. Perimeter locked.";
+      caption.style.borderLeftColor = "#0284c7";
+    }
+    else if (state === 2) {
+      t1.style.transform = "translate(182px, 160px)";
+      t2.style.transform = "translate(182px, 320px)";
+      t3.style.transform = "translate(770px, 240px) scale(-1, 1)";
+
+      w1.setAttribute("stroke", "#f59e0b");
+      w2.setAttribute("stroke", "#f59e0b");
+      w3.setAttribute("stroke", "#cbd5e1");
+
+      coreHub.setAttribute("fill", "#fef2f2");
+      coreHub.setAttribute("stroke", "#ef4444");
+      coreRing.setAttribute("stroke", "#fecaca");
+      coreText.textContent = "DENY";
+      coreText.setAttribute("fill", "#ef4444");
+
+      hudStatus.textContent = "STATUS: INCOMPLETE QUORUM (2-OF-3) // ACCESS DENIED";
+      caption.innerHTML = "<strong>CREW COERCION DEFEATED:</strong> Even if hijackers force both flight attendants to surrender s₁ and s₂, reconstruction is mathematically impossible without s₃. The central gate denies access.";
+      caption.style.borderLeftColor = "#ef4444";
+    }
+    else if (state === 3) {
+      t1.style.transform = "translate(182px, 160px)";
+      t2.style.transform = "translate(182px, 320px)";
+      t3.style.transform = "translate(718px, 240px) scale(-1, 1)";
+
+      w1.setAttribute("stroke", "#10b981");
+      w2.setAttribute("stroke", "#10b981");
+      w3.setAttribute("stroke", "#10b981");
+
+      coreHub.setAttribute("fill", "#ecfdf5");
+      coreHub.setAttribute("stroke", "#10b981");
+      coreRing.setAttribute("stroke", "#a7f3d0");
+      coreText.textContent = "UNLOCK";
+      coreText.setAttribute("fill", "#10b981");
+
+      hudStatus.textContent = "STATUS: FULL QUORUM (3-OF-3) // LATCH RELEASED";
+      caption.innerHTML = "<strong>QUORUM ACHIEVED:</strong> Ground human operators release s₃. All three shares converge in the hardware core, satisfying the threshold gate and de-energizing the lock solenoids.";
+      caption.style.borderLeftColor = "#10b981";
+    }
+  }
+
+  // =========================================================================
+  // ЛОГИКА 2-Й СЦЕНЫ: РАЗМЕЩЕНИЕ В САЛОНЕ
+  // =========================================================================
+  let sc2_currentPhase = 1;
+
+  function setDistPhase(phase) {
+    sc2_currentPhase = phase;
+    clearTimeout(sc2_timer1);
+    clearTimeout(sc2_timer2);
+
+    document.querySelectorAll('#sceneView2 .controls button').forEach((b, i) => {
+      b.classList.toggle('active', i + 1 === phase);
+    });
+
+    const hudStatus = document.getElementById('sc2_hudStatus');
+    const caption = document.getElementById('sc2_phaseCaption');
+
+    const agent = document.getElementById('sc2_groundAgent');
+    const senior = document.getElementById('sc2_seniorFA');
+    const junior = document.getElementById('sc2_juniorFA');
+
+    const keyS3 = document.getElementById('sc2_keyS3');
+    const keyS1 = document.getElementById('sc2_keyS1');
+    const keyS2 = document.getElementById('sc2_keyS2');
+
+    if (phase === 1) {
+      hudStatus.textContent = "PHASE 1: GROUND SERVICE s3 PLACEMENT";
+      caption.innerHTML = "<strong>1. GROUND AGENT SECRET PLACEMENT:</strong> Before crew boarding, Ground Security enters the cabin, moves to the secret compartment, locks Key s3 in the HSM, and exits.";
+
+      senior.style.opacity = "0";
+      junior.style.opacity = "0";
+      keyS1.style.opacity = "0";
+      keyS2.style.opacity = "0";
+
+      agent.style.opacity = "1";
+      agent.style.transform = "translate(560px, 260px)";
+      keyS3.style.opacity = "1";
+      keyS3.style.transform = "translate(560px, 235px)";
+
+      sc2_timer1 = setTimeout(() => {
+        if (sc2_currentPhase !== 1) return;
+        agent.style.transform = "translate(560px, 300px)";
+        keyS3.style.transform = "translate(560px, 332px)";
+      }, 1200);
+
+      sc2_timer2 = setTimeout(() => {
+        if (sc2_currentPhase !== 1) return;
+        agent.style.transform = "translate(830px, 260px)";
+        setTimeout(() => { if (sc2_currentPhase === 1) agent.style.opacity = "0"; }, 1200);
+      }, 2600);
+    } 
+    else if (phase === 2) {
+      hudStatus.textContent = "PHASE 2: SENIOR FA BOARDS -> RECEIVES s1";
+      caption.innerHTML = "<strong>2. SENIOR FA BOARDING SEQUENCE:</strong> Senior FA enters the cabin empty-handed, walks to the forward station near the cockpit, and receives/activates Key Token s1.";
+
+      keyS3.style.opacity = "1";
+      keyS3.style.transform = "translate(560px, 332px)";
+      agent.style.opacity = "0";
+
+      junior.style.opacity = "0";
+      keyS2.style.opacity = "0";
+
+      keyS1.style.opacity = "0";
+      senior.style.opacity = "1";
+      senior.style.transform = "translate(830px, 260px)";
+
+      sc2_timer1 = setTimeout(() => {
+        if (sc2_currentPhase !== 2) return;
+        senior.style.transform = "translate(320px, 260px)";
+      }, 100);
+
+      sc2_timer2 = setTimeout(() => {
+        if (sc2_currentPhase !== 2) return;
+        keyS1.style.opacity = "1";
+      }, 1300);
+    } 
+    else if (phase === 3) {
+      hudStatus.textContent = "PHASE 3: JUNIOR FA BOARDS -> RECEIVES s2";
+      caption.innerHTML = "<strong>3. JUNIOR FA BOARDING SEQUENCE:</strong> Junior FA enters the cabin, occupies the aft galley position, and receives Key Token s2. All 3 shares are active and physically isolated.";
+
+      keyS3.style.opacity = "1";
+      keyS3.style.transform = "translate(560px, 332px)";
+
+      senior.style.opacity = "1";
+      senior.style.transform = "translate(320px, 260px)";
+      keyS1.style.opacity = "1";
+
+      keyS2.style.opacity = "0";
+      junior.style.opacity = "1";
+      junior.style.transform = "translate(830px, 260px)";
+
+      sc2_timer1 = setTimeout(() => {
+        if (sc2_currentPhase !== 3) return;
+        junior.style.transform = "translate(750px, 260px)";
+      }, 100);
+
+      sc2_timer2 = setTimeout(() => {
+        if (sc2_currentPhase !== 3) return;
+        keyS2.style.opacity = "1";
+      }, 1300);
+    }
+  }
+
+  // Запуск первой сцены
+  setSchemeState(1);
+</script>
+</body>
+</html>
