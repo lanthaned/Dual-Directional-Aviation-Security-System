@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sensor Protocols: Dual Optical Array & Edge-AI</title>
+<style>
+  :root {
+    --bg-light: #f8fafc;
+    --blueprint-grid: #e2e8f0;
+    --panel-border: #94a3b8;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --accent-blue: #0284c7;
+    --pulse-green: #10b981;
+    --alert-amber: #d97706;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--bg-light);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    padding: 15px 10px 40px;
+    overflow-x: hidden;
+  }
+
+  /* ВЕРХНЕЕ МЕНЮ ПЕРЕКЛЮЧЕНИЯ ДВУХ СЦЕН (Адаптивное) */
+  .master-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    max-width: 900px;
+    width: 100%;
+    z-index: 50;
+  }
+
+  .master-toggle button {
+    background: #ffffff;
+    border: 1.5px solid var(--panel-border);
+    color: var(--text-secondary);
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    transition: all 0.2s;
+  }
+
+  .master-toggle button:hover {
+    background: #f1f5f9;
+    border-color: var(--accent-blue);
+  }
+
+  .master-toggle button.active-view {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+  }
+
+  .scene-block {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .scene-block.active-scene {
+    display: flex;
+  }
+
+  /* Идеально адаптивный контейнер */
+  .canvas-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 900 / 520;
+    background: #ffffff;
+    border: 2px solid var(--panel-border);
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+    container-type: inline-size;
+  }
+
+  .grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, var(--blueprint-grid) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--blueprint-grid) 1px, transparent 1px);
+    background-size: 25px 25px;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  /* Тексты масштабируются сами через cqw (container query width) */
+  .pane-header {
+    position: absolute;
+    top: 4cqw;
+    left: 4cqw;
+    font-size: clamp(8px, 1.8cqw, 11px);
+    letter-spacing: 2px;
+    font-weight: 700;
+    color: var(--accent-blue);
+    z-index: 10;
+  }
+
+  .pane-status {
+    position: absolute;
+    top: 4cqw;
+    right: 4cqw;
+    font-size: clamp(8px, 1.8cqw, 11px);
+    letter-spacing: 1px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    z-index: 10;
+  }
+
+  /* ПЛАШКИ ОПУЩЕНЫ В САМЫЙ НИЗ И ПРИЖАТЫ К КРАЯМ */
+  .phase-caption {
+    position: absolute;
+    bottom: 1.5cqw; 
+    left: 2.5cqw; 
+    right: 2.5cqw;
+    background: #ffffff;
+    border: 1px solid var(--blueprint-grid);
+    border-left: 4px solid var(--accent-blue);
+    padding: 1.5cqw 2cqw;
+    border-radius: 0 6px 6px 0;
+    font-size: clamp(9px, 2.2cqw, 13px);
+    line-height: 1.5;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    z-index: 20;
+    color: var(--text-primary);
+  }
+
+  svg { width: 100%; height: 100%; display: block; position: absolute; inset: 0; }
+
+  /* Кнопки жестко вынесены вниз, чтобы не перекрываться графикой */
+  .controls {
+    margin-top: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    z-index: 60;
+  }
+
+  .controls button {
+    background: #ffffff;
+    border: 1.5px solid var(--panel-border);
+    color: var(--text-primary);
+    padding: 10px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    transition: all 0.2s;
+  }
+
+  .controls button:hover {
+    background: #f1f5f9;
+    border-color: var(--accent-blue);
+  }
+
+  .controls button.active-blue {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: #ffffff;
+  }
+</style>
+</head>
+<body>
+
+<!-- ГЛАВНОЕ МЕНЮ ВЫБОРА РЕЖИМА -->
+<div class="master-toggle">
+  <button id="tabBtn1" class="active-view" onclick="switchMasterView(1)">1. Dual Optical Array (Cross-Attestation)</button>
+  <button id="tabBtn2" onclick="switchMasterView(2)">2. Semantic Watchdog (Edge-AI Pipeline)</button>
+</div>
+
+<!-- ========================================================================= -->
+<!-- РЕЖИМ 1: DUAL OPTICAL ARRAY                                               -->
+<!-- ========================================================================= -->
+<div id="sceneView1" class="scene-block active-scene">
+  <div class="canvas-container">
+    <div class="grid-overlay"></div>
+    <div class="pane-header">DUAL OPTICAL ARRAY // CROSS-ATTESTATION FIELD OF VIEW</div>
+    <div class="pane-status" style="color: var(--text-secondary);">MODE: DIRECT CROSS-LOCK</div>
+
+    <svg viewBox="0 0 900 520">
+      
+      <!-- ЧЕРТЕЖ САМОЛЕТА С ИДЕАЛЬНОЙ ГЕОМЕТРИЕЙ -->
+      <g id="d_aircraftProfile">
+        <!-- Внешний контур (Нос конусом, салон ровным прямоугольником) -->
+        <path d="M 100 260 Q 130 100 250 100 L 820 100 L 820 420 L 250 420 Q 130 420 100 260 Z" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+        
+        <!-- Кабина (Cockpit) -->
+        <path d="M 100 260 Q 130 100 250 100 L 250 420 Q 130 420 100 260 Z" fill="#e2e8f0" stroke="#94a3b8" stroke-dasharray="4 2"/>
+        <text x="140" y="265" fill="#64748b" font-size="11" font-weight="700" letter-spacing="2">COCKPIT</text>
+
+        <!-- Бронированная дверь (ровно на границе конуса и прямоугольника) -->
+        <line x1="250" y1="100" x2="250" y2="420" stroke="#0284c7" stroke-width="4"/>
+        <text x="235" y="200" fill="#0284c7" font-size="9" transform="rotate(-90, 235, 200)" font-weight="700" letter-spacing="1">COCKPIT DOOR PERIMETER</text>
+
+        <!-- Кресла (вид сверху - прямоугольные) -->
+        <g fill="#ffffff" stroke="#cbd5e1">
+          <rect x="280" y="115" width="28" height="40" rx="3"/><rect x="320" y="115" width="28" height="40" rx="3"/>
+          <rect x="370" y="115" width="28" height="40" rx="3"/><rect x="410" y="115" width="28" height="40" rx="3"/>
+          <rect x="460" y="115" width="28" height="40" rx="3"/><rect x="500" y="115" width="28" height="40" rx="3"/>
+          <rect x="550" y="115" width="28" height="40" rx="3"/><rect x="590" y="115" width="28" height="40" rx="3"/>
+          <rect x="640" y="115" width="28" height="40" rx="3"/><rect x="680" y="115" width="28" height="40" rx="3"/>
+
+          <rect x="280" y="365" width="28" height="40" rx="3"/><rect x="320" y="365" width="28" height="40" rx="3"/>
+          <rect x="370" y="365" width="28" height="40" rx="3"/><rect x="410" y="365" width="28" height="40" rx="3"/>
+          <rect x="460" y="365" width="28" height="40" rx="3"/><rect x="500" y="365" width="28" height="40" rx="3"/>
+          <rect x="550" y="365" width="28" height="40" rx="3"/><rect x="590" y="365" width="28" height="40" rx="3"/>
+          <rect x="640" y="365" width="28" height="40" rx="3"/><rect x="680" y="365" width="28" height="40" rx="3"/>
+        </g>
+      </g>
+
+      <!-- КОНУСЫ ОБЗОРА -->
+      <g id="d_fovGroup2" transform="translate(780, 260)">
+        <path d="M 0 0 L -530 -250 L -530 250 Z" fill="url(#gradCam2)" opacity="0.48"/>
+        <line x1="0" y1="0" x2="-530" y2="0" stroke="#0284c7" stroke-width="2" stroke-dasharray="6 3"/>
+      </g>
+
+      <g id="d_fovGroup1" transform="translate(260, 260)">
+        <path d="M 0 0 L 520 -250 L 520 250 Z" fill="url(#gradCam1)" opacity="0.95"/>
+        <line x1="0" y1="0" x2="520" y2="0" stroke="#d97706" stroke-width="2" stroke-dasharray="6 3"/>
+      </g>
+
+      <!-- КАМЕРЫ -->
+      <g id="d_camHead1" transform="translate(260, 260)">
+        <circle cx="0" cy="0" r="16" fill="#ffffff" stroke="#d97706" stroke-width="3.5"/>
+        <g id="d_lens1">
+          <polygon points="0,-6 14,0 0,6" fill="#d97706"/>
+          <circle cx="4" cy="0" r="3" fill="#000"/>
+        </g>
+        <text x="-40" y="-22" fill="#d97706" font-size="10" font-weight="800">CAM 1: AFT VIEW</text>
+      </g>
+
+      <g id="d_camHead2" transform="translate(780, 260)">
+        <circle cx="0" cy="0" r="16" fill="#ffffff" stroke="#0284c7" stroke-width="3.5"/>
+        <g id="d_lens2">
+          <polygon points="0,-6 -14,0 0,6" fill="#0284c7"/>
+          <circle cx="-4" cy="0" r="3" fill="#000"/>
+        </g>
+        <text x="-35" y="-22" fill="#0284c7" font-size="10" font-weight="800">CAM 2: FORE VIEW</text>
+      </g>
+
+      <!-- ПРИЦЕЛЫ (Автоматическая SVG анимация) -->
+      <g id="d_targetLock1" transform="translate(780, 260)">
+        <circle cx="0" cy="0" r="22" fill="none" stroke="#d97706" stroke-width="2" stroke-dasharray="4 2">
+          <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="8s" repeatCount="indefinite"/>
+        </circle>
+        <text x="28" y="4" fill="#d97706" font-size="8" font-weight="800">LOCK: CAM 2</text>
+      </g>
+
+      <g id="d_targetLock2" transform="translate(260, 260)">
+        <circle cx="0" cy="0" r="22" fill="none" stroke="#0284c7" stroke-width="2" stroke-dasharray="4 2">
+          <animateTransform attributeName="transform" type="rotate" from="360" to="0" dur="8s" repeatCount="indefinite"/>
+        </circle>
+        <text x="-75" y="4" fill="#0284c7" font-size="8" font-weight="800">LOCK: CAM 1</text>
+      </g>
+
+      <defs>
+        <linearGradient id="gradCam1" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.95"/>
+          <stop offset="50%" stop-color="#fbbf24" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#d97706" stop-opacity="0.2"/>
+        </linearGradient>
+        <linearGradient id="gradCam2" x1="100%" y1="0%" x2="0%" y2="0%">
+          <stop offset="0%" stop-color="#0284c7" stop-opacity="0.95"/>
+          <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.65"/>
+          <stop offset="100%" stop-color="#0284c7" stop-opacity="0.3"/>
+        </linearGradient>
+      </defs>
+    </svg>
+
+    <div class="phase-caption">
+      <strong>DIRECT CROSS-LOCK MODE:</strong> CAM 1 yellow beam overlaps the blue beam of CAM 2. Both cameras lock their central wide-angle axes directly onto each other for direct cross-attestation.
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- РЕЖИМ 2: SEMANTIC WATCHDOG                                                -->
+<!-- ========================================================================= -->
+<div id="sceneView2" class="scene-block">
+  <div class="canvas-container">
+    <div class="grid-overlay"></div>
+    <div class="pane-header">SEMANTIC WATCHDOG // EDGE-AI PIPELINE</div>
+    <div class="pane-status" id="w_hudStatus" style="color: var(--pulse-green);">ACTIVE: SAMPLING AT 2 FPS</div>
+
+    <svg viewBox="0 0 900 520">
+      <defs>
+        <!-- Обновленное кресло с U-образной базой -->
+        <g id="w_seatFront">
+          <!-- Спинка -->
+          <rect x="-18" y="-30" width="36" height="32" rx="4" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+          <line x1="-18" y1="-12" x2="18" y2="-12" stroke="#cbd5e1" stroke-width="1.2"/>
+          <!-- Подушка -->
+          <rect x="-22" y="2" width="44" height="12" rx="3" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+          <!-- U-образная скоба (Опора) -->
+          <path d="M -14 14 L -14 32 Q -14 35 -10 35 L 10 35 Q 14 35 14 32 L 14 14" fill="none" stroke="#94a3b8" stroke-width="2"/>
+        </g>
+      </defs>
+
+      <!-- САЛОН САМОЛЕТА (ПЕРСПЕКТИВА) -->
+      <g transform="translate(230, 260)">
+        <path d="M -160 160 L -160 20 C -160 -110, 160 -110, 160 20 L 160 160" fill="none" stroke="#cbd5e1" stroke-width="2"/>
+        <line x1="-160" y1="160" x2="160" y2="160" stroke="#94a3b8" stroke-width="2"/>
+        <line x1="0" y1="160" x2="0" y2="80" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <path d="M -150 -40 Q 0 -60, 150 -40" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+
+        <g transform="translate(-105, 100) scale(1.1)"><use href="#w_seatFront"/></g>
+        <g transform="translate(-60, 100) scale(1.1)"><use href="#w_seatFront"/></g>
+        <g transform="translate(60, 100) scale(1.1)"><use href="#w_seatFront"/></g>
+        <g transform="translate(105, 100) scale(1.1)"><use href="#w_seatFront"/></g>
+
+        <!-- КАМЕРА И ЛУЧ -->
+        <polygon id="w_camCone" points="0,-70 -120,150 120,150" fill="#0284c7" opacity="0.08"/>
+        <line x1="0" y1="-70" x2="-120" y2="150" stroke="#0284c7" stroke-width="1" stroke-dasharray="4 2" opacity="0.3"/>
+        <line x1="0" y1="-70" x2="120" y2="150" stroke="#0284c7" stroke-width="1" stroke-dasharray="4 2" opacity="0.3"/>
+
+        <g transform="translate(0, -78)">
+          <rect x="-14" y="-8" width="28" height="12" rx="2" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+          <circle cx="0" cy="8" r="8" fill="#1e293b" stroke="#0284c7" stroke-width="2"/>
+          <circle id="w_camPupil" cx="0" cy="8" r="4" fill="#0284c7"/>
+        </g>
+        <rect x="-45" y="-35" width="90" height="18" rx="3" fill="#ffffff" stroke="#0284c7" stroke-width="1"/>
+        <text x="0" y="-23" text-anchor="middle" fill="#0284c7" font-size="8" font-weight="700">OPTICAL 2 FPS</text>
+      </g>
+
+      <!-- ШИНЫ И БЛОКИ АНАЛИЗА -->
+      <path id="w_busCamToAi" d="M 230 170 L 230 110 L 450 110" fill="none" stroke="#0284c7" stroke-width="2.5" stroke-dasharray="6 3"/>
+
+      <g transform="translate(450, 65)">
+        <rect x="0" y="0" width="160" height="90" rx="8" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+        <rect x="6" y="6" width="148" height="24" rx="4" fill="#0f172a"/>
+        <text x="80" y="22" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="700" letter-spacing="1">EDGE-AI MODULE</text>
+        <text x="80" y="48" text-anchor="middle" fill="#0284c7" font-size="12" font-weight="800">Gemma 4 2B</text>
+        <text x="80" y="64" text-anchor="middle" fill="#64748b" font-size="8">INTERPRETATION & EMBEDDING</text>
+        <text x="80" y="78" text-anchor="middle" fill="#10b981" font-size="8" font-weight="700">INFERENCE &lt; 200 ms</text>
+      </g>
+
+      <path d="M 610 110 L 660 110" fill="none" stroke="#0284c7" stroke-width="2.5"/>
+
+      <g transform="translate(660, 75)">
+        <rect x="0" y="0" width="150" height="70" rx="6" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+        <text x="75" y="24" text-anchor="middle" fill="#0f172a" font-size="9" font-weight="700">CRYPTO ENCRYPTION</text>
+        <text x="75" y="40" text-anchor="middle" fill="#64748b" font-size="8">64-BIT STATUS WORD</text>
+        <rect x="20" y="48" width="110" height="15" rx="2" fill="#e2e8f0"/>
+        <text x="75" y="59" text-anchor="middle" fill="#0f172a" font-size="8" font-family="monospace">&lt; 200 BYTES SIGNED</text>
+      </g>
+
+      <path d="M 735 145 L 735 240" fill="none" stroke="#0284c7" stroke-width="2.5"/>
+
+      <g transform="translate(660, 240)">
+        <rect x="0" y="0" width="150" height="70" rx="6" fill="#ffffff" stroke="#0284c7" stroke-width="2"/>
+        <text x="75" y="24" text-anchor="middle" fill="#0284c7" font-size="10" font-weight="800">VHF MODULATOR</text>
+        <text x="75" y="42" text-anchor="middle" fill="#64748b" font-size="8">ACARS / CPDLC BAND</text>
+        <path d="M 60 56 Q 75 48, 90 56" fill="none" stroke="#0284c7" stroke-width="1.5"/>
+        <path d="M 65 60 Q 75 54, 85 60" fill="none" stroke="#0284c7" stroke-width="1.5"/>
+        <circle cx="75" cy="63" r="1.5" fill="#0284c7"/>
+      </g>
+
+      <path id="w_groundLine" d="M 810 275 L 890 275" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="6 3"/>
+      <polygon points="895,275 885,270 885,280" fill="#10b981"/>
+
+      <g transform="translate(635, 330)">
+        <rect x="0" y="0" width="240" height="36" rx="4" fill="#ecfdf5" stroke="#10b981" stroke-width="1.2"/>
+        <text x="120" y="16" text-anchor="middle" fill="#065f46" font-size="9" font-weight="700">TRANSMITTED TO GROUND CONTROL</text>
+        <text x="120" y="28" text-anchor="middle" fill="#047857" font-size="8">FOR GROUND-SIDE DECRYPTION & ARBITRATION</text>
+      </g>
+
+      <!-- Анимация импульсов передачи -->
+      <circle cx="0" cy="0" r="4" fill="#0284c7">
+        <animateMotion dur="2.5s" repeatCount="indefinite" path="M 230 170 L 230 110 L 450 110 M 610 110 L 660 110 M 735 145 L 735 240 M 810 275 L 890 275"/>
+      </circle>
+    </svg>
+
+    <div class="phase-caption">
+      <strong>EDGE-AI ARBITRATION PIPELINE:</strong> The overhead wide-angle camera samples the cabin at 2 fps. Frames are fed to the on-board Gemma 4 2B model for semantic interpretation. Validated telemetry is compressed into a signed 64-bit vector and broadcast via VHF directly to ground dispatchers for decryption.
+    </div>
+  </div>
+
+  <div class="controls" id="controlsBlock1">
+    <button id="w_btnPulse" class="active-blue" onclick="togglePulse()">Pulse Sampling Loop</button>
+  </div>
+</div>
+
+<script>
+  let w_isPulsing = true;
+  let w_interval = null;
+
+  // ПЕРЕКЛЮЧЕНИЕ МЕЖДУ СЦЕНАМИ
+  function switchMasterView(viewNum) {
+    document.getElementById('tabBtn1').classList.toggle('active-view', viewNum === 1);
+    document.getElementById('tabBtn2').classList.toggle('active-view', viewNum === 2);
+    document.getElementById('sceneView1').classList.toggle('active-scene', viewNum === 1);
+    document.getElementById('sceneView2').classList.toggle('active-scene', viewNum === 2);
+  }
+
+  // УПРАВЛЕНИЕ WATCHDOG ПУЛЬСАЦИЕЙ
+  function togglePulse() {
+    w_isPulsing = !w_isPulsing;
+    const btn = document.getElementById('w_btnPulse');
+    const statusText = document.getElementById('w_hudStatus');
+    
+    if (btn) btn.classList.toggle('active-blue', w_isPulsing);
+    if (statusText) {
+      statusText.textContent = w_isPulsing ? "ACTIVE: SAMPLING AT 2 FPS" : "PAUSED: STANDBY";
+      statusText.style.color = w_isPulsing ? "var(--pulse-green)" : "var(--text-muted)";
+    }
+  }
+
+  function startWatchdogPulse() {
+    if (w_interval) clearInterval(w_interval);
+    w_interval = setInterval(() => {
+      if (!w_isPulsing) return;
+      const pupil = document.getElementById('w_camPupil');
+      const cone = document.getElementById('w_camCone');
+      if (pupil && cone) {
+        pupil.setAttribute('fill', pupil.getAttribute('fill') === '#0284c7' ? '#10b981' : '#0284c7');
+        cone.setAttribute('opacity', cone.getAttribute('opacity') === '0.08' ? '0.16' : '0.08');
+      }
+    }, 500);
+  }
+
+  // Запускаем пульсацию при загрузке страницы
+  startWatchdogPulse();
+</script>
+</body>
+</html>
