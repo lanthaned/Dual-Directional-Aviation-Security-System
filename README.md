@@ -36,10 +36,11 @@ The collected information is digitally signed and sent through ACARS and CPDLC. 
 
 *(Note: Click the links below to launch interactive engineering visualizations of the system's core protocols).*
 
-* 🚀 **[Simulation 1: History of the AIRPLANE SECURITY](#)**
-* 🚀 **[Simulation 2: Sensor Tampering & Lockout Advisory](#)**
-* 🚀 **[Simulation 3: Dynamic Key Disclosure & Dual Quorum](#)**
-* 🚀 **[Simulation 4: Full Human-in-the-Loop Architecture](#)**
+* 🚀 **[Simulation 1: History of the Airplane Security](#)**
+* 🚀 **[Simulation 2: Unlocking protocol 3-out-of-3 (Shamir scheme)](#)**
+* 🚀 **[Simulation 3: Sensor Tampering & Lockout Advisory](#)**
+* 🚀 **[Simulation 4: Dynamic Key Disclosure & Dual Quorum](#)**
+* 🚀 **[Simulation 5: Full Human-in-the-Loop Architecture](#)**
 
 ---
 
